@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "repository": "https://github.com/tmccoy678/DEGS-v2.1",
+  "base_commit": "50289ead9c286a24175b6748921e3ae709d844d5",
+  "method": "Manual source corrections; regression-first public CLI/API tests; independent source review.",
+  "environment": {
+    "os": "macOS",
+    "version": "27.0.1",
+    "build": "26A434",
+    "architecture": "arm64",
+    "python": [
+      "3.14.7",
+      "3.9.6"
+    ],
+    "dependencies": "Python standard library; no packages installed",
+    "isolation": "Temporary venv without pip/system site packages; temporary HOME/TMPDIR; restricted environment; PYTHONDONTWRITEBYTECODE=1; no external Phase 4 specification."
+  },
+  "source_identity_note": "File hashes bind the final tested source generation; base_commit identifies its predecessor. Earlier validator observations are retained and explicitly superseded. Git delivery identities are recorded outside this immutable evidence package.",
+  "source_sha256": {
+    "ENGINEERING_CHARTER.md": "3fe4599467802e185c4433532250a70cec615d231d929871a7289b5c039a7f40",
+    "benchmarks/run_benchmark.py": "96aff2ac163ff9e67068b755e8b38006e47019801f730bb668610be973fa0093",
+    "benchmarks/test_benchmark.py": "b132bbd6a2fb0e21402f71a44f417721582fbf52f07c1965c56f8b7554e604cc",
+    "bin/engineering-gate.py": "8b687a92cb607be9e03223e1c17d7bbf419a60b0593446d2cd3fa2d6cbe4e0e0",
+    "fixtures/tier0-readonly-pass.json": "5e8f6f123627a5a5347d0c4923abf42e5b609ca5dd431086eb10a53c05f0b769",
+    "fixtures/tier1-reversible-pass.json": "3769589821af8a6f76e3a95367f24a756d46e407750c77a647386d9775828a8b",
+    "fixtures/tier2-complete-pass.json": "2e29be817dee058f23d16242613ac41dec18c26c253c8c7fc11b4677d7a4c655",
+    "fixtures/tier2-missing-rollback-blocked.json": "9290e98bced40b69a5d6ca11c12e13145ac01e87a447692f260fbbd7f4b428b5",
+    "fixtures/tier3-agent-self-approval-blocked.json": "e4ea4f453bc7556ffbe959a23fc34cac6fe34e419f7774ac462dc88d176aa78a",
+    "fixtures/tier3-complete-dry-run-pass.json": "348ceafc30edab70f68e13567f9df98d1b6dbf28852a976fe22be2af24a07a3c",
+    "fixtures/tier3-no-human-approval-blocked.json": "8526ac2e32d65bae5846fb42824299a68ef55f54157da0e7056c6c4265e5323f",
+    "gate.schema.json": "6bd711de9cf17c4f67f1bead5c36d2a77632555f6a6d0a75b1acd02c60c69c64",
+    "sashiko_derived/__init__.py": "85ca29f5112393f902c91faf8692ca563a0ab7ba1bf94e788fcd63be5785d342",
+    "sashiko_derived/demo.py": "c990e991f7257a9fc92e3eea08e6ba7e3ad0fc902351f4580372295fa2b58a72",
+    "tests/test_engineering_gate.py": "30053318a02b4e2a34ca2957d9832360b0eef76c063e4ea3db174c33b5c4e504",
+    "tests/test_json_equality.py": "4e79599278b593d3b36ec733e9e41955adcad8931cdba23dd842ad62f2bd9ff9",
+    "tests/test_sashiko_derived.py": "b9f1eb53b4f78f1670ad5eb5dbf12a05972bf7d65d886b1ac2718a73d4fb8ee9",
+    "tools/check_rust_parity.py": "a11966b1ed6e5865208a18dabaec2e17c439db25b80e4a648aea35c8150f7fbd"
+  },
+  "accepted_record_indices": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "final_suite_summary": [
+    {
+      "record_index": 0,
+      "suite": "unit",
+      "interpreter": "3.14",
+      "discovered": 79,
+      "passed": 79,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "record_index": 1,
+      "suite": "bench-tests",
+      "interpreter": "3.14",
+      "discovered": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "record_index": 2,
+      "suite": "unit",
+      "interpreter": "3.9",
+      "discovered": 79,
+      "passed": 79,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "record_index": 3,
+      "suite": "bench-tests",
+      "interpreter": "3.9",
+      "discovered": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "superseded_record_indices": [],
+  "supersession_note": "All listed records concern the final corrected source.",
+  "benchmark": {
+    "path": "benchmarks/results/apple-silicon-v4.json",
+    "sha256": "1fe769540825b908be5edf146a11f05c398980f6e0a1312e5ec509d805ef86a1",
+    "selected": 241,
+    "passed": 241,
+    "failed": 0,
+    "controls_passed": true
+  },
+  "limitations": [
+    "Schema-helper benchmark does not measure whole-gate governance decisions or full JSON Schema compliance.",
+    "Recorded evidence shape/status does not authenticate truth or human approval; the gate executes no task.",
+    "Optional Rust parity comparison was not rerun; toolchain unavailable."
+  ],
+  "records": [
+    {
+      "suite": "unit",
+      "interpreter": "3.14",
+      "command": [
+        "/private/tmp/dobeworks-degs-review.wxwfNP/venv/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "started_at": "2026-10-20T20:58:52.005166+00:00",
+      "ended_at": "2026-10-20T20:59:08.660951+00:00",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "test_all_fixture_rule_ids_exist_in_charter (test_engineering_gate.EngineeringGateCliTests.test_all_fixture_rule_ids_exist_in_charter) ... ok\ntest_declared_failed_or_blocked_status_stops_an_otherwise_passing_task (test_engineering_gate.EngineeringGateCliTests.test_declared_failed_or_blocked_status_stops_an_otherwise_passing_task) ... ok\ntest_duplicate_task_keys_are_rejected_at_every_object_depth (test_engineering_gate.EngineeringGateCliTests.test_duplicate_task_keys_are_rejected_at_every_object_depth) ... ok\ntest_evaluate_blocks_required_test_evidence_with_blank_path (test_engineering_gate.EngineeringGateCliTests.test_evaluate_blocks_required_test_evidence_with_blank_path) ... ok\ntest_evaluate_cannot_pass_schema_incomplete_or_unknown_task (test_engineering_gate.EngineeringGateCliTests.test_evaluate_cannot_pass_schema_incomplete_or_unknown_task) ... ok\ntest_excessive_nesting_anywhere_returns_structured_failure (test_engineering_gate.EngineeringGateCliTests.test_excessive_nesting_anywhere_returns_structured_failure) ... ok\ntest_excessive_state_nesting_returns_structured_failure (test_engineering_gate.EngineeringGateCliTests.test_excessive_state_nesting_returns_structured_failure) ... ok\ntest_explain_includes_applicable_degs_rule_ids (test_engineering_gate.EngineeringGateCliTests.test_explain_includes_applicable_degs_rule_ids) ... ok\ntest_invalid_json_returns_invalid_input_exit_code (test_engineering_gate.EngineeringGateCliTests.test_invalid_json_returns_invalid_input_exit_code) ... ok\ntest_invalid_utf8_returns_structured_failure (test_engineering_gate.EngineeringGateCliTests.test_invalid_utf8_returns_structured_failure) ... ok\ntest_malformed_control_types_return_schema_failure (test_engineering_gate.EngineeringGateCliTests.test_malformed_control_types_return_schema_failure) ... ok\ntest_malformed_nested_controls_are_not_hidden_by_earlier_failures (test_engineering_gate.EngineeringGateCliTests.test_malformed_nested_controls_are_not_hidden_by_earlier_failures) ... ok\ntest_missing_authority_lane_blocks (test_engineering_gate.EngineeringGateCliTests.test_missing_authority_lane_blocks) ... ok\ntest_missing_schema_version_returns_invalid_input_exit_code (test_engineering_gate.EngineeringGateCliTests.test_missing_schema_version_returns_invalid_input_exit_code) ... ok\ntest_noncritical_warning_returns_pass_with_warnings_exit_code (test_engineering_gate.EngineeringGateCliTests.test_noncritical_warning_returns_pass_with_warnings_exit_code) ... ok\ntest_nonfinite_json_constants_are_rejected (test_engineering_gate.EngineeringGateCliTests.test_nonfinite_json_constants_are_rejected) ... ok\ntest_planned_placeholders_validate_but_cannot_pass_readiness (test_engineering_gate.EngineeringGateCliTests.test_planned_placeholders_validate_but_cannot_pass_readiness) ... ok\ntest_readiness_rejects_blank_or_mistyped_planning_controls (test_engineering_gate.EngineeringGateCliTests.test_readiness_rejects_blank_or_mistyped_planning_controls) ... ok\ntest_readiness_rejects_malformed_recovery_and_rollback_controls (test_engineering_gate.EngineeringGateCliTests.test_readiness_rejects_malformed_recovery_and_rollback_controls) ... ok\ntest_schema_controls_expanded_tier2_and_tier3_evidence (test_engineering_gate.EngineeringGateCliTests.test_schema_controls_expanded_tier2_and_tier3_evidence) ... ok\ntest_schema_controls_tier3_human_approval_fields (test_engineering_gate.EngineeringGateCliTests.test_schema_controls_tier3_human_approval_fields) ... ok\ntest_schema_invalid_record_takes_precedence_over_declared_stop_status (test_engineering_gate.EngineeringGateCliTests.test_schema_invalid_record_takes_precedence_over_declared_stop_status) ... ok\ntest_secret_like_telemetry_field_is_rejected (test_engineering_gate.EngineeringGateCliTests.test_secret_like_telemetry_field_is_rejected) ... ok\ntest_tier0_readonly_fixture_passes (test_engineering_gate.EngineeringGateCliTests.test_tier0_readonly_fixture_passes) ... ok\ntest_tier1_informational_rule_list_matches_applicable_controls (test_engineering_gate.EngineeringGateCliTests.test_tier1_informational_rule_list_matches_applicable_controls) ... ok\ntest_tier1_reversible_fixture_passes (test_engineering_gate.EngineeringGateCliTests.test_tier1_reversible_fixture_passes) ... ok\ntest_tier1_unmet_controls_report_governing_rule_ids (test_engineering_gate.EngineeringGateCliTests.test_tier1_unmet_controls_report_governing_rule_ids) ... ok\ntest_tier2_and_tier3_accept_verified_vv_evidence (test_engineering_gate.EngineeringGateCliTests.test_tier2_and_tier3_accept_verified_vv_evidence) ... ok\ntest_tier2_and_tier3_require_validation_evidence (test_engineering_gate.EngineeringGateCliTests.test_tier2_and_tier3_require_validation_evidence) ... ok\ntest_tier2_and_tier3_require_verification_evidence (test_engineering_gate.EngineeringGateCliTests.test_tier2_and_tier3_require_verification_evidence) ... ok\ntest_tier2_artifact_identity_and_change_traceability_fail_closed (test_engineering_gate.EngineeringGateCliTests.test_tier2_artifact_identity_and_change_traceability_fail_closed) ... ok\ntest_tier2_author_cannot_be_independent_reviewer (test_engineering_gate.EngineeringGateCliTests.test_tier2_author_cannot_be_independent_reviewer) ... ok\ntest_tier2_blank_nested_control_evidence_fails_closed (test_engineering_gate.EngineeringGateCliTests.test_tier2_blank_nested_control_evidence_fails_closed) ... ok\ntest_tier2_complete_fixture_passes (test_engineering_gate.EngineeringGateCliTests.test_tier2_complete_fixture_passes) ... ok\ntest_tier2_data_purpose_authority_and_repurposing_fail_closed (test_engineering_gate.EngineeringGateCliTests.test_tier2_data_purpose_authority_and_repurposing_fail_closed) ... ok\ntest_tier2_deterministic_boundaries_fail_closed (test_engineering_gate.EngineeringGateCliTests.test_tier2_deterministic_boundaries_fail_closed) ... ok\ntest_tier2_incomplete_consequential_ai_assurance_is_blocked (test_engineering_gate.EngineeringGateCliTests.test_tier2_incomplete_consequential_ai_assurance_is_blocked) ... ok\ntest_tier2_incomplete_monitoring_and_safe_degradation_is_blocked (test_engineering_gate.EngineeringGateCliTests.test_tier2_incomplete_monitoring_and_safe_degradation_is_blocked) ... ok\ntest_tier2_informational_rule_list_matches_applicable_controls (test_engineering_gate.EngineeringGateCliTests.test_tier2_informational_rule_list_matches_applicable_controls) ... ok\ntest_tier2_missing_rollback_is_blocked (test_engineering_gate.EngineeringGateCliTests.test_tier2_missing_rollback_is_blocked) ... ok\ntest_tier2_reasoned_non_applicability_is_accepted (test_engineering_gate.EngineeringGateCliTests.test_tier2_reasoned_non_applicability_is_accepted) ... ok\ntest_tier2_risk_analysis_requires_all_classification_factors (test_engineering_gate.EngineeringGateCliTests.test_tier2_risk_analysis_requires_all_classification_factors) ... ok\ntest_tier2_stale_or_incomplete_threat_model_is_blocked (test_engineering_gate.EngineeringGateCliTests.test_tier2_stale_or_incomplete_threat_model_is_blocked) ... ok\ntest_tier2_unmet_controls_report_governing_rule_ids (test_engineering_gate.EngineeringGateCliTests.test_tier2_unmet_controls_report_governing_rule_ids) ... ok\ntest_tier3_agent_self_approval_is_blocked (test_engineering_gate.EngineeringGateCliTests.test_tier3_agent_self_approval_is_blocked) ... ok\ntest_tier3_complete_dry_run_passes_for_readiness_only (test_engineering_gate.EngineeringGateCliTests.test_tier3_complete_dry_run_passes_for_readiness_only) ... ok\ntest_tier3_hazard_and_residual_risk_controls_fail_closed (test_engineering_gate.EngineeringGateCliTests.test_tier3_hazard_and_residual_risk_controls_fail_closed) ... ok\ntest_tier3_in_band_approval_record_is_blocked (test_engineering_gate.EngineeringGateCliTests.test_tier3_in_band_approval_record_is_blocked) ... ok\ntest_tier3_lowercase_approval_status_is_blocked (test_engineering_gate.EngineeringGateCliTests.test_tier3_lowercase_approval_status_is_blocked) ... ok\ntest_tier3_missing_approver_role_is_blocked (test_engineering_gate.EngineeringGateCliTests.test_tier3_missing_approver_role_is_blocked) ... ok\ntest_tier3_missing_independent_review_blocks (test_engineering_gate.EngineeringGateCliTests.test_tier3_missing_independent_review_blocks) ... ok\ntest_tier3_missing_recovery_validation_blocks (test_engineering_gate.EngineeringGateCliTests.test_tier3_missing_recovery_validation_blocks) ... ok\ntest_tier3_missing_stop_conditions_blocks (test_engineering_gate.EngineeringGateCliTests.test_tier3_missing_stop_conditions_blocks) ... ok\ntest_tier3_missing_target_identity_blocks (test_engineering_gate.EngineeringGateCliTests.test_tier3_missing_target_identity_blocks) ... ok\ntest_tier3_readiness_rejects_malformed_containment_and_evidence (test_engineering_gate.EngineeringGateCliTests.test_tier3_readiness_rejects_malformed_containment_and_evidence) ... ok\ntest_tier3_unmet_controls_report_governing_rule_ids (test_engineering_gate.EngineeringGateCliTests.test_tier3_unmet_controls_report_governing_rule_ids) ... ok\ntest_tier3_without_human_approval_is_blocked (test_engineering_gate.EngineeringGateCliTests.test_tier3_without_human_approval_is_blocked) ... ok\ntest_unknown_data_authority_cannot_be_hidden_by_case_or_whitespace (test_engineering_gate.EngineeringGateCliTests.test_unknown_data_authority_cannot_be_hidden_by_case_or_whitespace) ... ok\ntest_unknown_risk_tier_fails_closed (test_engineering_gate.EngineeringGateCliTests.test_unknown_risk_tier_fails_closed) ... ok\ntest_unresolved_critical_warning_blocks_tier3 (test_engineering_gate.EngineeringGateCliTests.test_unresolved_critical_warning_blocks_tier3) ... ok\ntest_unsupported_risk_tier_fails_closed (test_engineering_gate.EngineeringGateCliTests.test_unsupported_risk_tier_fails_closed) ... ok\ntest_validate_accepts_complete_fixture_structure (test_engineering_gate.EngineeringGateCliTests.test_validate_accepts_complete_fixture_structure) ... ok\ntest_validate_accepts_complete_tier2_and_tier3_schema_records (test_engineering_gate.EngineeringGateCliTests.test_validate_accepts_complete_tier2_and_tier3_schema_records) ... ok\ntest_validate_accepts_planned_task_template (test_engineering_gate.EngineeringGateCliTests.test_validate_accepts_planned_task_template) ... ok\ntest_validate_attributes_nested_risk_schema_failure_to_risk_rule (test_engineering_gate.EngineeringGateCliTests.test_validate_attributes_nested_risk_schema_failure_to_risk_rule) ... ok\ntest_validate_rejects_required_test_evidence_without_path (test_engineering_gate.EngineeringGateCliTests.test_validate_rejects_required_test_evidence_without_path) ... ok\ntest_validate_rejects_schema_incomplete_tier2_task (test_engineering_gate.EngineeringGateCliTests.test_validate_rejects_schema_incomplete_tier2_task) ... ok\ntest_validate_rejects_structurally_incomplete_task (test_engineering_gate.EngineeringGateCliTests.test_validate_rejects_structurally_incomplete_task) ... ok\ntest_validate_rejects_unknown_top_level_and_nested_properties (test_engineering_gate.EngineeringGateCliTests.test_validate_rejects_unknown_top_level_and_nested_properties) ... ok\ntest_validate_requires_tier2_and_tier3_verification_and_validation_evidence (test_engineering_gate.EngineeringGateCliTests.test_validate_requires_tier2_and_tier3_verification_and_validation_evidence) ... ok\ntest_all_fourteen_original_public_failures (test_json_equality.JsonEqualityTests.test_all_fourteen_original_public_failures) ... ok\ntest_deep_decodable_containers_preserve_existing_comparison_support (test_json_equality.JsonEqualityTests.test_deep_decodable_containers_preserve_existing_comparison_support) ... ok\ntest_nested_values_follow_json_equality (test_json_equality.JsonEqualityTests.test_nested_values_follow_json_equality) ... ok\ntest_aliasing_is_rejected_before_any_append (test_sashiko_derived.SourcePortTests.test_aliasing_is_rejected_before_any_append) ... ok\ntest_append_preserves_order_scalars_and_detaches_nested_values (test_sashiko_derived.SourcePortTests.test_append_preserves_order_scalars_and_detaches_nested_values) ... ok\ntest_object_boundary_defaults_rejects_wrong_fields_and_ignores_extras (test_sashiko_derived.SourcePortTests.test_object_boundary_defaults_rejects_wrong_fields_and_ignores_extras) ... ok\ntest_positive_items_default_only_missing_nonstring_or_empty_type (test_sashiko_derived.SourcePortTests.test_positive_items_default_only_missing_nonstring_or_empty_type) ... ok\ntest_shared_python_subtrees_become_independent_owned_json_subtrees (test_sashiko_derived.SourcePortTests.test_shared_python_subtrees_become_independent_owned_json_subtrees) ... ok\ntest_state_defaults_are_independent (test_sashiko_derived.SourcePortTests.test_state_defaults_are_independent) ... ok\n\n----------------------------------------------------------------------\nRan 79 tests in 16.601s\n\nOK\n"
+    },
+    {
+      "suite": "bench-tests",
+      "interpreter": "3.14",
+      "command": [
+        "/private/tmp/dobeworks-degs-review.wxwfNP/venv/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "benchmarks",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "started_at": "2026-10-20T20:59:08.661550+00:00",
+      "ended_at": "2026-10-20T20:59:43.631809+00:00",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "test_all_predeclared_cases_are_measured_with_independent_labels (test_benchmark.BenchmarkTests.test_all_predeclared_cases_are_measured_with_independent_labels) ... ok\ntest_corpus_drift_is_an_input_error_without_a_score (test_benchmark.BenchmarkTests.test_corpus_drift_is_an_input_error_without_a_score) ... ok\ntest_degenerate_and_broken_candidates_cannot_earn_success (test_benchmark.BenchmarkTests.test_degenerate_and_broken_candidates_cannot_earn_success) ... ok\ntest_one_timeout_remains_a_failed_case_in_the_denominator (test_benchmark.BenchmarkTests.test_one_timeout_remains_a_failed_case_in_the_denominator) ... ok\ntest_selection_manifest_drift_is_rejected (test_benchmark.BenchmarkTests.test_selection_manifest_drift_is_rejected) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 34.937s\n\nOK\n"
+    },
+    {
+      "suite": "unit",
+      "interpreter": "3.9",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "started_at": "2026-10-20T20:59:43.632163+00:00",
+      "ended_at": "2026-10-20T21:00:25.356754+00:00",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "test_all_fixture_rule_ids_exist_in_charter (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_declared_failed_or_blocked_status_stops_an_otherwise_passing_task (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_duplicate_task_keys_are_rejected_at_every_object_depth (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_evaluate_blocks_required_test_evidence_with_blank_path (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_evaluate_cannot_pass_schema_incomplete_or_unknown_task (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_excessive_nesting_anywhere_returns_structured_failure (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_excessive_state_nesting_returns_structured_failure (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_explain_includes_applicable_degs_rule_ids (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_invalid_json_returns_invalid_input_exit_code (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_invalid_utf8_returns_structured_failure (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_malformed_control_types_return_schema_failure (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_malformed_nested_controls_are_not_hidden_by_earlier_failures (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_missing_authority_lane_blocks (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_missing_schema_version_returns_invalid_input_exit_code (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_noncritical_warning_returns_pass_with_warnings_exit_code (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_nonfinite_json_constants_are_rejected (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_planned_placeholders_validate_but_cannot_pass_readiness (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_readiness_rejects_blank_or_mistyped_planning_controls (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_readiness_rejects_malformed_recovery_and_rollback_controls (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_schema_controls_expanded_tier2_and_tier3_evidence (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_schema_controls_tier3_human_approval_fields (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_schema_invalid_record_takes_precedence_over_declared_stop_status (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_secret_like_telemetry_field_is_rejected (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier0_readonly_fixture_passes (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier1_informational_rule_list_matches_applicable_controls (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier1_reversible_fixture_passes (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier1_unmet_controls_report_governing_rule_ids (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_and_tier3_accept_verified_vv_evidence (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_and_tier3_require_validation_evidence (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_and_tier3_require_verification_evidence (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_artifact_identity_and_change_traceability_fail_closed (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_author_cannot_be_independent_reviewer (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_blank_nested_control_evidence_fails_closed (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_complete_fixture_passes (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_data_purpose_authority_and_repurposing_fail_closed (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_deterministic_boundaries_fail_closed (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_incomplete_consequential_ai_assurance_is_blocked (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_incomplete_monitoring_and_safe_degradation_is_blocked (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_informational_rule_list_matches_applicable_controls (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_missing_rollback_is_blocked (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_reasoned_non_applicability_is_accepted (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_risk_analysis_requires_all_classification_factors (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_stale_or_incomplete_threat_model_is_blocked (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier2_unmet_controls_report_governing_rule_ids (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_agent_self_approval_is_blocked (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_complete_dry_run_passes_for_readiness_only (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_hazard_and_residual_risk_controls_fail_closed (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_in_band_approval_record_is_blocked (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_lowercase_approval_status_is_blocked (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_missing_approver_role_is_blocked (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_missing_independent_review_blocks (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_missing_recovery_validation_blocks (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_missing_stop_conditions_blocks (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_missing_target_identity_blocks (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_readiness_rejects_malformed_containment_and_evidence (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_unmet_controls_report_governing_rule_ids (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_tier3_without_human_approval_is_blocked (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_unknown_data_authority_cannot_be_hidden_by_case_or_whitespace (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_unknown_risk_tier_fails_closed (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_unresolved_critical_warning_blocks_tier3 (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_unsupported_risk_tier_fails_closed (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_validate_accepts_complete_fixture_structure (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_validate_accepts_complete_tier2_and_tier3_schema_records (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_validate_accepts_planned_task_template (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_validate_attributes_nested_risk_schema_failure_to_risk_rule (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_validate_rejects_required_test_evidence_without_path (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_validate_rejects_schema_incomplete_tier2_task (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_validate_rejects_structurally_incomplete_task (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_validate_rejects_unknown_top_level_and_nested_properties (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_validate_requires_tier2_and_tier3_verification_and_validation_evidence (test_engineering_gate.EngineeringGateCliTests) ... ok\ntest_all_fourteen_original_public_failures (test_json_equality.JsonEqualityTests) ... ok\ntest_deep_decodable_containers_preserve_existing_comparison_support (test_json_equality.JsonEqualityTests) ... ok\ntest_nested_values_follow_json_equality (test_json_equality.JsonEqualityTests) ... ok\ntest_aliasing_is_rejected_before_any_append (test_sashiko_derived.SourcePortTests) ... ok\ntest_append_preserves_order_scalars_and_detaches_nested_values (test_sashiko_derived.SourcePortTests) ... ok\ntest_object_boundary_defaults_rejects_wrong_fields_and_ignores_extras (test_sashiko_derived.SourcePortTests) ... ok\ntest_positive_items_default_only_missing_nonstring_or_empty_type (test_sashiko_derived.SourcePortTests) ... ok\ntest_shared_python_subtrees_become_independent_owned_json_subtrees (test_sashiko_derived.SourcePortTests) ... ok\ntest_state_defaults_are_independent (test_sashiko_derived.SourcePortTests) ... ok\n\n----------------------------------------------------------------------\nRan 79 tests in 41.569s\n\nOK\n"
+    },
+    {
+      "suite": "bench-tests",
+      "interpreter": "3.9",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "benchmarks",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "started_at": "2026-10-20T21:00:25.357031+00:00",
+      "ended_at": "2026-10-20T21:02:03.620801+00:00",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "test_all_predeclared_cases_are_measured_with_independent_labels (test_benchmark.BenchmarkTests) ... ok\ntest_corpus_drift_is_an_input_error_without_a_score (test_benchmark.BenchmarkTests) ... ok\ntest_degenerate_and_broken_candidates_cannot_earn_success (test_benchmark.BenchmarkTests) ... ok\ntest_one_timeout_remains_a_failed_case_in_the_denominator (test_benchmark.BenchmarkTests) ... ok\ntest_selection_manifest_drift_is_rejected (test_benchmark.BenchmarkTests) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 98.146s\n\nOK\n"
+    },
+    {
+      "suite": "benchmark-run",
+      "interpreter": "3.14",
+      "command": [
+        "/private/tmp/dobeworks-degs-review.wxwfNP/venv/bin/python3",
+        "-B",
+        "benchmarks/run_benchmark.py",
+        "--output",
+        "benchmarks/results/apple-silicon-v4.json"
+      ],
+      "started_at": "2026-10-20T21:02:03.621112+00:00",
+      "ended_at": "2026-10-20T21:02:11.643892+00:00",
+      "exit_code": 0,
+      "stdout": "{\"selected\": 241, \"passed\": 241, \"failed\": 0, \"controls_passed\": true}\n",
+      "stderr": ""
+    }
+  ]
+}

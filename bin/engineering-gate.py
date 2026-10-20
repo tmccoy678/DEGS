@@ -70,6 +70,8 @@ SCHEMA_PATH = Path(__file__).resolve().parents[1] / "gate.schema.json"
 
 SCHEMA_RULE_BY_FIELD = {
     "objective": "DEGS-MISSION-001",
+    "requirements": "DEGS-REQ-002",
+    "acceptance_criteria": "DEGS-REQ-002",
     "authority_lane": "DEGS-AI-001",
     "risk_tier": "DEGS-RISK-001",
     "risk_analysis": "DEGS-RISK-001",
@@ -156,6 +158,14 @@ def nonblank_string_list(value):
         isinstance(value, list)
         and bool(value)
         and all(nonblank_string(item) for item in value)
+    )
+
+
+def scope_valid(value):
+    return (
+        isinstance(value, dict)
+        and nonblank_string(value.get("description"))
+        and ("read_only" not in value or isinstance(value["read_only"], bool))
     )
 
 
@@ -307,7 +317,7 @@ def data_governance_valid(value):
         and value.get("minimum_necessary") is True
         and nonblank_string(value.get("provenance"))
         and nonblank_string(value.get("authority"))
-        and str(value.get("authority")).upper() != "UNKNOWN"
+        and value["authority"].strip().upper() != "UNKNOWN"
         and nonblank_string(value.get("retention"))
         and nonblank_string(value.get("deletion_or_archival_conditions"))
         and nonblank_string(value.get("access_boundary"))
@@ -325,7 +335,7 @@ def data_governance_valid(value):
         repurposing.get("status") == "AUTHORIZED"
         and nonblank_string(repurposing.get("purpose"))
         and nonblank_string(repurposing.get("authority"))
-        and str(repurposing.get("authority")).upper() != "UNKNOWN"
+        and repurposing["authority"].strip().upper() != "UNKNOWN"
         and nonblank_string(repurposing.get("evidence_path"))
     )
 
@@ -770,7 +780,7 @@ def evaluate_tier0(task):
     unmet = []
     scope = task.get("scope")
     read_only = isinstance(scope, dict) and scope.get("read_only") is True
-    if not nonempty(task.get("objective")):
+    if not nonblank_string(task.get("objective")):
         unmet.append(
             {
                 "field": "objective",
@@ -778,7 +788,7 @@ def evaluate_tier0(task):
                 "message": "Tier 0 requires an objective.",
             }
         )
-    if not (nonempty(scope) and read_only):
+    if not (scope_valid(scope) and read_only):
         unmet.append(
             {
                 "field": "scope.read_only",
@@ -820,9 +830,9 @@ def tier1_controls(task):
         "DEGS-CONTEXT-001",
         "DEGS-AI-001",
     ]
-    if not nonempty(task.get("objective")):
+    if not nonblank_string(task.get("objective")):
         add_unmet(unmet, "objective", "DEGS-MISSION-001", "An objective is required.")
-    if not nonempty(task.get("scope")):
+    if not scope_valid(task.get("scope")):
         add_unmet(unmet, "scope", "DEGS-REQ-001", "A bounded scope is required.")
     # This is the task-record evaluation scope: Taylor's human authority may
     # submit Tier 1 or Tier 2 evidence directly. It is intentionally broader
@@ -834,9 +844,9 @@ def tier1_controls(task):
     }.get(task.get("risk_tier"), set())
     if string_control(task, "authority_lane") not in allowed_lanes:
         add_unmet(unmet, "authority_lane", "DEGS-AI-001", "A supported authority lane appropriate to the risk tier is required.")
-    if not nonempty(task.get("requirements")):
+    if not nonblank_string_list(task.get("requirements")):
         add_unmet(unmet, "requirements", "DEGS-REQ-002", "Tier 1 requires measurable requirements.")
-    if not nonempty(task.get("acceptance_criteria")):
+    if not nonblank_string_list(task.get("acceptance_criteria")):
         add_unmet(unmet, "acceptance_criteria", "DEGS-REQ-002", "Tier 1 requires acceptance criteria.")
     if not status_is(task.get("baseline"), "RECORDED", "PASS", "VERIFIED"):
         add_unmet(unmet, "baseline", "DEGS-CFG-001", "Tier 1 requires a recorded baseline.")
@@ -848,9 +858,9 @@ def tier1_controls(task):
     rollback_is_trivial = (
         isinstance(rollback, dict)
         and rollback.get("required") is False
-        and nonempty(rollback.get("reason"))
+        and nonblank_string(rollback.get("reason"))
     )
-    rollback_is_verified = status_is(rollback, "PASS", "VERIFIED") and nonempty(
+    rollback_is_verified = status_is(rollback, "PASS", "VERIFIED") and nonblank_string(
         rollback.get("procedure")
     )
     if task.get("risk_tier") == "TIER_1" and not (
@@ -867,42 +877,7 @@ def evaluate_tier1(task):
     return result("BLOCKED" if unmet else "PASS", task, unmet=unmet, rule_ids=rules)
 
 
-def tier2_controls(task):
-    unmet, rules = tier1_controls(task)
-    rules.extend(
-        [
-            "DEGS-CFG-002",
-            "DEGS-CFG-003",
-            "DEGS-CFG-004",
-            "DEGS-CFG-005",
-            "DEGS-CFG-006",
-            "DEGS-RISK-001",
-            "DEGS-RISK-002",
-            "DEGS-VV-003",
-            "DEGS-SEC-001",
-            "DEGS-SEC-006",
-            "DEGS-DATA-003",
-            "DEGS-AI-006",
-            "DEGS-VV-004",
-            "DEGS-VV-005",
-            "DEGS-VV-006",
-            "DEGS-VV-007",
-            "DEGS-OPS-002",
-        ]
-    )
-    rules = list(dict.fromkeys(rules))
-    backup = task.get("backup")
-    if not (
-        status_is(backup, "PASS", "VERIFIED")
-        and nonempty(backup.get("evidence_path"))
-    ):
-        add_unmet(unmet, "backup", "DEGS-RISK-002", "Tier 2 requires a verified pre-change backup.")
-    rollback = task.get("rollback")
-    if not (
-        status_is(rollback, "PASS", "VERIFIED")
-        and nonempty(rollback.get("procedure"))
-    ):
-        add_unmet(unmet, "rollback", "DEGS-CFG-004", "Tier 2 requires an explicit verified rollback procedure.")
+def tier2_assurance_controls(task, unmet):
     if not risk_analysis_valid(task.get("risk_analysis")):
         add_unmet(
             unmet,
@@ -959,6 +934,9 @@ def tier2_controls(task):
             "DEGS-AI-006",
             "Consequential AI work requires intended and unsupported uses, affected stakeholders, human control, representative and adversarial whole-system tests, monitoring triggers, limitations, and retirement criteria; other work requires a reasoned non-applicability record.",
         )
+
+
+def tier2_test_controls(task, unmet, rules):
     for category, rule_id, label in (
         ("negative", "DEGS-VV-003", "negative tests"),
         ("security", "DEGS-SEC-001", "security tests"),
@@ -985,6 +963,35 @@ def tier2_controls(task):
             "DEGS-VV-001",
             "Tier 2 requires passing validation evidence with a nonblank evidence path.",
         )
+
+
+def tier2_controls(task):
+    unmet, rules = tier1_controls(task)
+    rules.extend(
+        [
+            "DEGS-CFG-002", "DEGS-CFG-003", "DEGS-CFG-004",
+            "DEGS-CFG-005", "DEGS-CFG-006", "DEGS-RISK-001",
+            "DEGS-RISK-002", "DEGS-VV-003", "DEGS-SEC-001",
+            "DEGS-SEC-006", "DEGS-DATA-003", "DEGS-AI-006",
+            "DEGS-VV-004", "DEGS-VV-005", "DEGS-VV-006",
+            "DEGS-VV-007", "DEGS-OPS-002",
+        ]
+    )
+    rules = list(dict.fromkeys(rules))
+    backup = task.get("backup")
+    if not (
+        status_is(backup, "PASS", "VERIFIED")
+        and nonblank_string(backup.get("evidence_path"))
+    ):
+        add_unmet(unmet, "backup", "DEGS-RISK-002", "Tier 2 requires a verified pre-change backup.")
+    rollback = task.get("rollback")
+    if not (
+        status_is(rollback, "PASS", "VERIFIED")
+        and nonblank_string(rollback.get("procedure"))
+    ):
+        add_unmet(unmet, "rollback", "DEGS-CFG-004", "Tier 2 requires an explicit verified rollback procedure.")
+    tier2_assurance_controls(task, unmet)
+    tier2_test_controls(task, unmet, rules)
     if not independent_review_valid(task):
         add_unmet(
             unmet,
@@ -1079,6 +1086,43 @@ def apply_declared_status_policy(task, payload):
     return payload
 
 
+def tier3_containment_controls(task, unmet):
+    target = task.get("target_identity")
+    if not (
+        isinstance(target, dict)
+        and target.get("verified") is True
+        and nonblank_string(target.get("identifier"))
+    ):
+        add_unmet(unmet, "target_identity", "DEGS-RISK-004", "Tier 3 requires exact verified target identity.")
+    blast_radius = task.get("blast_radius")
+    if not (
+        isinstance(blast_radius, dict)
+        and blast_radius.get("bounded") is True
+        and nonblank_string(blast_radius.get("description"))
+    ):
+        add_unmet(unmet, "blast_radius", "DEGS-RISK-004", "Tier 3 requires a bounded blast radius.")
+    if not nonblank_string_list(task.get("stop_conditions")):
+        add_unmet(unmet, "stop_conditions", "DEGS-RISK-004", "Tier 3 requires explicit stop conditions.")
+    if not status_with_evidence_path_is(task.get("post_action_validation"), "PASS", "VERIFIED"):
+        add_unmet(unmet, "post_action_validation", "DEGS-RISK-004", "Tier 3 requires post-action validation evidence.")
+    dry_run = task.get("dry_run")
+    dry_run_satisfied = isinstance(dry_run, dict) and (
+        (
+            dry_run.get("applicable") is True
+            and dry_run.get("performed") is True
+            and status_with_evidence_path_is(dry_run, "PASS")
+        )
+        or (
+            dry_run.get("applicable") is False
+            and nonblank_string(dry_run.get("reason"))
+        )
+    )
+    if not dry_run_satisfied:
+        add_unmet(unmet, "dry_run", "DEGS-VV-008", "Tier 3 requires a dry run where possible or a documented reason it is not applicable.")
+    if unresolved_critical_warning(task):
+        add_unmet(unmet, "warnings", "DEGS-RISK-004", "An unresolved critical warning blocks Tier 3.")
+
+
 def evaluate_tier3(task):
     unmet, rules = tier2_controls(task)
     rules.extend(
@@ -1110,7 +1154,7 @@ def evaluate_tier3(task):
         and approval.get("approver") == "Taylor"
         and approval.get("approver_role") == "HUMAN"
         and approval.get("approval_mode") == "OUT_OF_BAND"
-        and nonempty(approval.get("evidence_path"))
+        and nonblank_string(approval.get("evidence_path"))
     ):
         add_unmet(
             unmet,
@@ -1122,7 +1166,7 @@ def evaluate_tier3(task):
     if not (
         status_is(recovery, "PASS", "VERIFIED")
         and recovery.get("independently_verified") is True
-        and nonempty(recovery.get("evidence_path"))
+        and nonblank_string(recovery.get("evidence_path"))
     ):
         add_unmet(unmet, "recovery_validation", "DEGS-RISK-005", "Tier 3 requires an independently verified recovery path.")
     review = task.get("independent_review")
@@ -1133,40 +1177,7 @@ def evaluate_tier3(task):
         and nonempty(review.get("evidence_path"))
     ):
         add_unmet(unmet, "independent_review", "DEGS-VV-008", "Tier 3 requires an independent audit by a separate role or model.")
-    target = task.get("target_identity")
-    if not (
-        isinstance(target, dict)
-        and target.get("verified") is True
-        and nonempty(target.get("identifier"))
-    ):
-        add_unmet(unmet, "target_identity", "DEGS-RISK-004", "Tier 3 requires exact verified target identity.")
-    blast_radius = task.get("blast_radius")
-    if not (
-        isinstance(blast_radius, dict)
-        and blast_radius.get("bounded") is True
-        and nonempty(blast_radius.get("description"))
-    ):
-        add_unmet(unmet, "blast_radius", "DEGS-RISK-004", "Tier 3 requires a bounded blast radius.")
-    if not nonempty(task.get("stop_conditions")):
-        add_unmet(unmet, "stop_conditions", "DEGS-RISK-004", "Tier 3 requires explicit stop conditions.")
-    if not status_is(task.get("post_action_validation"), "PASS", "VERIFIED"):
-        add_unmet(unmet, "post_action_validation", "DEGS-RISK-004", "Tier 3 requires post-action validation evidence.")
-    dry_run = task.get("dry_run")
-    dry_run_satisfied = isinstance(dry_run, dict) and (
-        (
-            dry_run.get("applicable") is True
-            and dry_run.get("performed") is True
-            and status_is(dry_run, "PASS")
-        )
-        or (
-            dry_run.get("applicable") is False
-            and nonempty(dry_run.get("reason"))
-        )
-    )
-    if not dry_run_satisfied:
-        add_unmet(unmet, "dry_run", "DEGS-VV-008", "Tier 3 requires a dry run where possible or a documented reason it is not applicable.")
-    if unresolved_critical_warning(task):
-        add_unmet(unmet, "warnings", "DEGS-RISK-004", "An unresolved critical warning blocks Tier 3.")
+    tier3_containment_controls(task, unmet)
     return result("BLOCKED" if unmet else "PASS", task, unmet=unmet, rule_ids=rules)
 
 
