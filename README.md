@@ -1,4 +1,14 @@
-# DEGS — v2.1 development draft
+# DEGS — v2.1 
+
+I built DobeWorks and DEGS for myself after I became obsessed with AI hallucination capture and immutable context transfer between windows. I believe that the resulting DobeWorks and DEGS that I was using on my MacPro are rigorous and true reflections of the diligence in the references of the work that they were built from.
+
+DobeWorks and DEGS are my private personal engineering system and identity for methodological systems, software, research infrastructure, and special projects. It is not currently a public company identity, service, or commercial offering.
+
+If you would like to discuss DobeWorks or DEGS privately, please email me at: tmccoy678@gmail.com.
+
+Thank you,
+
+Taylor
 
 ## Figures and references
 
