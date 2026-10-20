@@ -89,6 +89,56 @@ SCHEMA_RULE_BY_FIELD = {
 }
 
 
+class InputError(ValueError):
+    """A task input cannot be interpreted unambiguously."""
+
+
+def unique_object(pairs):
+    # Reuse the DEAS adapter's duplicate-name check before any value is lost.
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise InputError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def reject_nonfinite_constant(value):
+    raise InputError(f"nonfinite JSON constant: {value}")
+
+
+def string_control(record, key):
+    # Missing controls retain their rule-specific BLOCKED diagnostics.
+    # Present non-string controls must not reach hash-based membership checks.
+    value = record.get(key)
+    if key in record and not isinstance(value, str):
+        raise InputError("A supplied string control has the wrong JSON type.")
+    return value
+
+
+def validate_supplied_string_controls(task):
+    string_control(task, "authority_lane")
+    string_control(task, "status")
+
+    artifact_identity = task.get("artifact_identity")
+    if isinstance(artifact_identity, dict):
+        string_control(artifact_identity, "method")
+
+    review = task.get("independent_review")
+    if isinstance(review, dict):
+        string_control(review, "open_issues_status")
+
+    hazard_analysis = task.get("hazard_analysis")
+    if not isinstance(hazard_analysis, dict):
+        return
+    hazards = hazard_analysis.get("hazards")
+    if not isinstance(hazards, list):
+        return
+    for hazard in hazards:
+        if isinstance(hazard, dict):
+            string_control(hazard, "disposition")
+
+
 def nonempty(value):
     if value is None or value is False:
         return False
@@ -182,7 +232,7 @@ def artifact_identity_valid(value):
     freshness = value.get("evidence_freshness")
     return (
         value.get("status") == "VERIFIED"
-        and value.get("method") in ARTIFACT_IDENTITY_METHODS
+        and string_control(value, "method") in ARTIFACT_IDENTITY_METHODS
         and nonblank_string(value.get("configuration_version"))
         and nonblank_string(value.get("canonical_path"))
         and all(nonblank_string(identifier) for identifier in identifiers)
@@ -381,7 +431,7 @@ def hazard_analysis_valid(value):
             isinstance(hazard, dict)
             and nonblank_string(hazard.get("hazard_id"))
             and nonblank_string(hazard.get("description"))
-            and hazard.get("disposition") in {"ELIMINATED", "MITIGATED"}
+            and string_control(hazard, "disposition") in {"ELIMINATED", "MITIGATED"}
             and nonblank_string(hazard.get("control"))
             and hazard.get("test_status") == "PASS"
             and nonblank_string(hazard.get("evidence_path"))
@@ -420,7 +470,7 @@ def independent_review_valid(task):
         and str(author).strip().casefold() != str(reviewer).strip().casefold()
         and nonblank_string(review.get("reviewer_role"))
         and nonblank_string(review.get("evidence_path"))
-        and review.get("open_issues_status") in {"NONE", "DISPOSITIONED"}
+        and string_control(review, "open_issues_status") in {"NONE", "DISPOSITIONED"}
         and review.get("retest_status") == "PASS"
     )
 
@@ -488,15 +538,21 @@ def invalid_result(message, task=None):
 def load_task(path):
     try:
         with path.open("r", encoding="utf-8") as handle:
-            task = json.load(handle)
-    except (OSError, json.JSONDecodeError) as error:
+            task = json.load(
+                handle,
+                object_pairs_hook=unique_object,
+                parse_constant=reject_nonfinite_constant,
+            )
+        if not isinstance(task, dict):
+            return None, "Task input must be a JSON object."
+        if task.get("schema_version") != 1:
+            return task, "schema_version must be 1."
+        if contains_secret_like_field(task.get("telemetry")) or contains_secret_like_field(task.get("state")):
+            return task, "Telemetry or state contains a prohibited secret-like field."
+    except (OSError, ValueError, RecursionError) as error:
+        # ValueError covers JSON syntax, UTF-8 decoding, duplicate names, and
+        # the interpreter's integer-conversion limit at this input boundary.
         return None, f"Task input is not readable valid JSON: {error.__class__.__name__}"
-    if not isinstance(task, dict):
-        return None, "Task input must be a JSON object."
-    if task.get("schema_version") != 1:
-        return task, "schema_version must be 1."
-    if contains_secret_like_field(task.get("telemetry")) or contains_secret_like_field(task.get("state")):
-        return task, "Telemetry or state contains a prohibited secret-like field."
     return task, None
 
 
@@ -776,7 +832,7 @@ def tier1_controls(task):
         "TIER_2": {"TAYLOR_AI_WORKBENCH", "AGENTOPS", "TAYLOR"},
         "TIER_3": {"TAYLOR"},
     }.get(task.get("risk_tier"), set())
-    if task.get("authority_lane") not in allowed_lanes:
+    if string_control(task, "authority_lane") not in allowed_lanes:
         add_unmet(unmet, "authority_lane", "DEGS-AI-001", "A supported authority lane appropriate to the risk tier is required.")
     if not nonempty(task.get("requirements")):
         add_unmet(unmet, "requirements", "DEGS-REQ-002", "Tier 1 requires measurable requirements.")
@@ -1005,7 +1061,7 @@ def apply_warning_policy(task, payload):
 
 
 def apply_declared_status_policy(task, payload):
-    declared_status = task.get("status")
+    declared_status = string_control(task, "status")
     if (
         declared_status not in {"FAILED", "BLOCKED"}
         or payload["decision"] not in {"PASS", "PASS_WITH_WARNINGS"}
@@ -1171,41 +1227,63 @@ def parse_args(argv):
 
 def main(argv=None):
     args = parse_args(list(sys.argv[1:] if argv is None else argv))
-    task, error = load_task(args.task)
-    if error:
-        payload, exit_code = invalid_result(error, task)
-    elif args.command == "validate":
-        payload = validate_structure(task)
-        exit_code = 4 if payload["decision"] == "FAIL" else 0
-    else:
-        schema_payload = validate_structure(task)
-        payload = evaluate(task)
-        if (
-            schema_payload["decision"] == "FAIL"
-            and payload["decision"] in {"PASS", "PASS_WITH_WARNINGS"}
-        ):
-            # Preserve rule-specific BLOCKED diagnostics for intentionally
-            # incomplete negative records, but never allow a schema-invalid
-            # record to receive a passing evaluation.
-            payload = schema_payload
-            exit_code = 4
+    try:
+        task, error = load_task(args.task)
+        if error:
+            payload, exit_code = invalid_result(error, task)
+        elif args.command == "validate":
+            payload = validate_structure(task)
+            exit_code = 4 if payload["decision"] == "FAIL" else 0
         else:
-            # Schema-invalid passing records fail before declared task status
-            # can turn them into ordinary workflow stops. Rule-specific
-            # BLOCKED diagnostics for incomplete negative records remain.
-            payload = apply_declared_status_policy(task, payload)
-            exit_code = EXIT_CODES[payload["decision"]]
+            schema_payload = validate_structure(task)
+            try:
+                validate_supplied_string_controls(task)
+                payload = evaluate(task)
+                if (
+                    schema_payload["decision"] == "FAIL"
+                    and payload["decision"] in {"PASS", "PASS_WITH_WARNINGS"}
+                ):
+                    # Preserve rule-specific BLOCKED diagnostics for intentionally
+                    # incomplete negative records, but never allow a schema-invalid
+                    # record to receive a passing evaluation.
+                    payload = schema_payload
+                    exit_code = 4
+                else:
+                    # Schema-invalid passing records fail before declared task status
+                    # can turn them into ordinary workflow stops. Rule-specific
+                    # BLOCKED diagnostics for incomplete negative records remain.
+                    payload = apply_declared_status_policy(task, payload)
+                    exit_code = EXIT_CODES[payload["decision"]]
+            except InputError as input_error:
+                # Reuse the canonical schema's field and rule diagnostics. Catch
+                # only explicit input rejection, not unexpected evaluator defects.
+                if schema_payload["decision"] == "FAIL":
+                    payload, exit_code = schema_payload, 4
+                else:
+                    payload, exit_code = invalid_result(str(input_error), task)
 
-    if args.command == "explain" and not error:
-        payload["explanations"] = {
-            rule_id: "Applicable readiness or completion control."
-            for rule_id in payload["applicable_rule_ids"]
-        }
+        if args.command == "explain" and not error:
+            payload["explanations"] = {
+                rule_id: "Applicable readiness or completion control."
+                for rule_id in payload["applicable_rule_ids"]
+            }
 
-    if args.json_output:
-        print(json.dumps(payload, indent=2, sort_keys=True))
-    else:
-        print(render_human(payload))
+        rendered = (
+            json.dumps(payload, indent=2, sort_keys=True)
+            if args.json_output
+            else render_human(payload)
+        )
+    except RecursionError:
+        payload, exit_code = invalid_result(
+            "Task input is not readable valid JSON: RecursionError"
+        )
+        rendered = (
+            json.dumps(payload, indent=2, sort_keys=True)
+            if args.json_output
+            else render_human(payload)
+        )
+
+    print(rendered)
     return exit_code
 
 
