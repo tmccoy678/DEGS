@@ -24,13 +24,16 @@ class EngineeringGateCliTests(unittest.TestCase):
             capture_output=True,
             text=True,
         )
+        self.assertTrue(completed.stdout, completed.stderr)
         payload = json.loads(completed.stdout)
         return completed, payload
 
-    def run_payload(self, command, payload=None, raw_text=None):
+    def run_payload(self, command, payload=None, raw_text=None, raw_bytes=None):
         with tempfile.TemporaryDirectory() as directory:
             task_path = Path(directory) / "task.json"
-            if raw_text is not None:
+            if raw_bytes is not None:
+                task_path.write_bytes(raw_bytes)
+            elif raw_text is not None:
                 task_path.write_text(raw_text, encoding="utf-8")
             else:
                 task_path.write_text(json.dumps(payload), encoding="utf-8")
@@ -856,6 +859,154 @@ class EngineeringGateCliTests(unittest.TestCase):
 
         self.assertEqual(completed.returncode, 4)
         self.assertEqual(payload["decision"], "FAIL")
+
+    def assert_invalid_input(self, completed, payload):
+        self.assertEqual(completed.returncode, 4, completed.stderr)
+        self.assertEqual(payload["decision"], "FAIL")
+        self.assertTrue(payload["unmet_requirements"])
+        self.assertEqual(completed.stderr, "")
+
+    def test_duplicate_task_keys_are_rejected_at_every_object_depth(self):
+        task = self.fixture_payload("tier1-reversible-pass.json")
+        task.pop("status")
+        body = json.dumps(task)[1:]
+        cases = {
+            "stop_then_complete": '{"status":"BLOCKED","status":"COMPLETE",' + body,
+            "complete_then_stop": '{"status":"COMPLETE","status":"BLOCKED",' + body,
+            "equal_values": '{"status":"COMPLETE","status":"COMPLETE",' + body,
+            "escaped_key": '{"status":"BLOCKED","sta\\u0074us":"COMPLETE",' + body,
+            "nested": (
+                '{"schema_version":1,"handoff":'
+                '{"status":"BLOCKED","status":"COMPLETE"}}'
+            ),
+            "object_in_array": (
+                '{"schema_version":1,"tests":{"positive":'
+                '[{"status":"FAIL","status":"PASS"}]}}'
+            ),
+        }
+        for command in ("validate", "evaluate", "explain"):
+            for case, text in cases.items():
+                with self.subTest(command=command, case=case):
+                    completed, payload = self.run_payload(command, raw_text=text)
+                    self.assert_invalid_input(completed, payload)
+                    self.assertEqual(payload["unmet_requirements"][0]["field"], "input")
+
+    def test_invalid_utf8_returns_structured_failure(self):
+        for command in ("validate", "evaluate", "explain"):
+            with self.subTest(command=command):
+                completed, payload = self.run_payload(
+                    command, raw_bytes=b'{"schema_version":1,"title":"\xff"}'
+                )
+                self.assert_invalid_input(completed, payload)
+
+    def test_nonfinite_json_constants_are_rejected(self):
+        task = self.fixture_payload("tier1-reversible-pass.json")
+        task["scope"]["nonfinite_probe"] = "NONFINITE_PLACEHOLDER"
+        template = json.dumps(task)
+        for token in ("NaN", "Infinity", "-Infinity"):
+            raw_text = template.replace('"NONFINITE_PLACEHOLDER"', token)
+            for command in ("validate", "evaluate", "explain"):
+                with self.subTest(token=token, command=command):
+                    completed, payload = self.run_payload(command, raw_text=raw_text)
+                    self.assert_invalid_input(completed, payload)
+
+    def test_excessive_state_nesting_returns_structured_failure(self):
+        cases = {
+            depth: '{"schema_version":1,"state":'
+            + "[" * depth + "0" + "]" * depth + "}"
+            for depth in (600, 2000)
+        }
+        for command in ("validate", "evaluate", "explain"):
+            for case, text in cases.items():
+                with self.subTest(command=command, case=case):
+                    completed, payload = self.run_payload(command, raw_text=text)
+                    self.assert_invalid_input(completed, payload)
+
+    def test_excessive_nesting_anywhere_returns_structured_failure(self):
+        depth = 1050
+        raw_text = (
+            '{"schema_version":1,"unexpected":'
+            + "[" * depth
+            + "0"
+            + "]" * depth
+            + "}"
+        )
+        for command in ("validate", "evaluate", "explain"):
+            with self.subTest(command=command):
+                completed, payload = self.run_payload(command, raw_text=raw_text)
+                self.assert_invalid_input(completed, payload)
+
+    def test_malformed_control_types_return_schema_failure(self):
+        cases = (
+            ("tier1-reversible-pass.json", ("authority_lane",)),
+            ("tier2-complete-pass.json", ("artifact_identity", "method")),
+            ("tier2-complete-pass.json", ("independent_review", "open_issues_status")),
+            ("tier3-complete-dry-run-pass.json", ("hazard_analysis", "hazards", 0, "disposition")),
+            ("tier1-reversible-pass.json", ("status",)),
+        )
+        for fixture_name, path in cases:
+            for value in ([], {}, None, True, 42, 1.5):
+                for command in ("validate", "evaluate", "explain"):
+                    with self.subTest(path=path, value=value, command=command):
+                        task = self.fixture_payload(fixture_name)
+                        if path == ("status",):
+                            # A pre-existing workflow block must not hide bad input.
+                            task.pop("handoff")
+                        parent = task
+                        for key in path[:-1]:
+                            parent = parent[key]
+                        parent[path[-1]] = value
+                        completed, payload = self.run_payload(command, payload=task)
+                        self.assert_invalid_input(completed, payload)
+                        expected = str(path[0])
+                        for key in path[1:]:
+                            expected += f"[{key}]" if isinstance(key, int) else f".{key}"
+                        self.assertIn(
+                            expected,
+                            {item["field"] for item in payload["unmet_requirements"]},
+                        )
+
+    def test_malformed_nested_controls_are_not_hidden_by_earlier_failures(self):
+        cases = (
+            (
+                "tier2-complete-pass.json",
+                ("artifact_identity", "method"),
+                ("artifact_identity", "status"),
+            ),
+            (
+                "tier2-complete-pass.json",
+                ("independent_review", "open_issues_status"),
+                ("independent_review", "reviewer_role"),
+            ),
+            (
+                "tier3-complete-dry-run-pass.json",
+                ("hazard_analysis", "hazards", 0, "disposition"),
+                ("hazard_analysis", "hazards", 0, "description"),
+            ),
+        )
+        for fixture_name, malformed_path, earlier_failure_path in cases:
+            for command in ("evaluate", "explain"):
+                with self.subTest(path=malformed_path, command=command):
+                    task = self.fixture_payload(fixture_name)
+                    parent = task
+                    for key in malformed_path[:-1]:
+                        parent = parent[key]
+                    parent[malformed_path[-1]] = []
+                    parent = task
+                    for key in earlier_failure_path[:-1]:
+                        parent = parent[key]
+                    parent[earlier_failure_path[-1]] = ""
+
+                    completed, payload = self.run_payload(command, payload=task)
+
+                    self.assert_invalid_input(completed, payload)
+                    expected = str(malformed_path[0])
+                    for key in malformed_path[1:]:
+                        expected += f"[{key}]" if isinstance(key, int) else f".{key}"
+                    self.assertIn(
+                        expected,
+                        {item["field"] for item in payload["unmet_requirements"]},
+                    )
 
     def test_missing_schema_version_returns_invalid_input_exit_code(self):
         completed, payload = self.run_payload("validate", payload={"task_id": "X"})
