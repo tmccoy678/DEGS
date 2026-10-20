@@ -67,6 +67,8 @@ Every result includes:
 
 `validate` applies the complete canonical JSON schema with a dependency-free validator. `evaluate` and `explain` preserve rule-specific BLOCKED diagnostics for intentionally incomplete negative records, but a record that would otherwise pass is rejected as invalid unless it also conforms to the schema. The planned JSON template is schema-valid; its `PENDING` controls are not readiness evidence and will not pass evaluation.
 
+Required readiness text must contain a non-whitespace character. Scope descriptions, requirements, acceptance criteria, target and blast-radius descriptions, stop conditions, rollback procedures, recovery references, approval references, and dry-run evidence or non-applicability reasons are checked for their required types and nonblank content. A list containing only blank strings does not satisfy a control. The data-authority sentinel `UNKNOWN` is rejected after trimming whitespace and ignoring case, including for repurposing authority. These checks validate the submitted record; they do not authenticate the referenced evidence or approval.
+
 A declared top-level task status of `FAILED` or `BLOCKED` is an authoritative stop signal under `DEGS-OPS-001`: an otherwise passing evaluation returns `BLOCKED` with exit code 2. `PLANNED`, `READY_FOR_EXECUTION`, `IN_PROGRESS`, and `COMPLETE` remain evidence-driven; a declaration never converts unmet evidence into a pass.
 
 An independent review record for Tier 2 and Tier 3 identifies `task_author` and a different reviewer, the reviewer role, evidence, open-issue disposition, and a passing retest. Submitted metadata cannot by itself prove cognitive independence.

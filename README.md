@@ -16,15 +16,15 @@ Taylor
 
 ## Public-data benchmark
 
-**241 of 241 cases matched after the recursive equality correction. All 14 former false acceptances now reject correctly; the first run is preserved.** See [benchmark results and reproduction](benchmarks/benchmark.md).
+**The current v4 benchmark matched 241 of 241 cases, with controls passing. All 14 historical false acceptances remain rejected; the first run is preserved.** See [benchmark results and reproduction](benchmarks/benchmark.md).
 
 DEGS evaluates engineering task records and explains whether their recorded evidence satisfies its rules. Missing recovery evidence or an agent's claimed human approval can block a task. A passing result does not prove the evidence true, approve the work, or execute it.
 
-**Private development draft. No versioned public release.** This copy applies a bounded recursive JSON-equality correction to the standalone gate and adds a small, Sashiko-derived Python review-data component. It does not activate governance on your computer.
+**Public development snapshot. No versioned release.** This copy contains the standalone evidence gate and a small, Sashiko-derived Python review-data component. The [boundary-fix record](docs/reviews/2026-10-20-boundary-fixes.md) separates the current input-validation work from historical comparator evidence. It does not activate governance on your computer.
 
 ## Try the gate
 
-Use an Apple-silicon Mac with Python 3.9 or later. Python 3.9.6 on macOS 26.6.2 was tested. No pip packages are needed for the gate or Python tests. Private repository access is currently required; run these commands from this checkout's root.
+Use Python 3.9 or later. No pip packages are needed for the gate or Python tests. The repository is public; run these commands from this checkout's root. Exact tested interpreters and environments are recorded with the [current verification results](docs/reviews/2026-10-20-boundary-fixes.md).
 
 ```sh
 python3 -B bin/engineering-gate.py evaluate fixtures/tier2-complete-pass.json --json
@@ -58,15 +58,17 @@ The Python port retains Sashiko's selected state names, independent list default
 python3 -B -m unittest discover -s tests -v
 ```
 
-The earlier run passed **64 tests**: 58 existing gate tests and 6 port tests. The current run passes **74 tests**, including three regression methods for recursive equality and seven for duplicate keys, invalid UTF-8, nonfinite JSON, excessive nesting, and malformed control values; five benchmark tests also pass. The tests exercise ordinary command input, valid and invalid records, required evidence, approval boundaries, and Python value semantics. A separate comparison passed **331 cases** against an executable harness containing the selected upstream Rust source. Instructions, raw outputs, source hashes, and exact environment are in [the test report](docs/test-report.md).
+Current verification passes **79 core/port tests and five benchmark tests**, covering Python 3.14.7 and Python 3.9.6. Five new CLI regression methods cover typed and nonblank planning, recovery and containment controls, planned-record readiness, and whitespace/case variants of unknown data authority. The tests also retain checks for ordinary command input, required evidence, approval boundaries, recursive JSON equality, duplicate keys, invalid UTF-8, nonfinite JSON, excessive nesting, and malformed control values. Exact commands, outputs, source identities, and environments are in the [October boundary-fix record](docs/reviews/2026-10-20-boundary-fixes.md).
 
-These results concern the recorded scenarios. They do not establish defect freedom, semantic truth, AI review accuracy, security certification, full-system integration, or support for other platforms. The copied core is identified in [the baseline manifest](provenance/degs-baseline.json). Local activation history, private audits, context-skill integration, and the Workbench adapter are excluded, along with tests requiring those dependencies. The policy rules remain unchanged. The comparator now distinguishes nested booleans from numbers; all 14 fixture CLI outputs remain identical. See the [correction record](docs/benchmark-correction.md) and [source identity](provenance/recursive-equality-correction.json).
+Historical source generations passed 64 tests in the [original port report](docs/test-report.md), 67 in the [v3 comparator verification](benchmarks/results/validation-v3.json), and 74 before the October boundary fixes. The original port report also records a historical **331-case Rust comparison**; that comparison was not rerun for these boundary fixes.
 
-An independent source-code review by [Nova (Muse Spark, Meta), 2026-10-05](docs/reviews/2026-10-05-nova.md) re-ran the suite under pytest (Python 3.12): **72 passed, 264 subtests passed, 0 failed**. No code was changed; no defects found. One documentation note: the `PASS_WITH_WARNINGS` → exit 1 convention could be stated once in the module docstring.
+These results concern the recorded scenarios. They do not establish defect freedom, semantic truth, AI review accuracy, security certification, full-system integration, or support for other platforms. The [baseline manifest](provenance/degs-baseline.json) identifies the copied core. The [comparator correction record](docs/benchmark-correction.md) and [recursive-correction source identity](provenance/recursive-equality-correction.json) describe the historical comparator generation, when all 14 fixture CLI outputs were preserved. The October boundary-fix record identifies the current source separately. Local activation history, private audits, context-skill integration, and the Workbench adapter remain excluded, along with tests requiring those dependencies. The policy rules remain unchanged.
+
+A historical independent source-code review by [Nova (Muse Spark, Meta), 2026-10-05](docs/reviews/2026-10-05-nova.md) re-ran that source generation under pytest (Python 3.12): **72 passed, 264 subtests passed, 0 failed**. No code was changed; no defects found in that review. One documentation note: the `PASS_WITH_WARNINGS` → exit 1 convention could be stated once in the module docstring.
 
 ## Purpose, credit, and help
 
-The goal is rigorous, understandable evidence with a clear explanation when something needs attention. Taylor welcomes questions, corrections, and suggestions and will respond as quickly as possible; no response-time guarantee is promised. Use this private repository's issues for non-sensitive questions. Follow [SECURITY.md](SECURITY.md) for vulnerability reports.
+The goal is rigorous, understandable evidence with a clear explanation when something needs attention. Taylor welcomes questions, corrections, and suggestions and will respond as quickly as possible; no response-time guarantee is promised. Use this repository's issues for non-sensitive questions. Follow [SECURITY.md](SECURITY.md) for vulnerability reports.
 
 Muchun Song introduced Sashiko's dismissed-concern collection and concern/dismissed-concern conflict resolution. The implementation also credits the Sashiko contributors and Chris Mason's separate review-prompts foundation. [Exact contributions and licensing](THIRD_PARTY_NOTICES.md) distinguish those roles. [Citations](CITATIONS.md) explain the source and software-engineering literature behind the reporting format.
 
