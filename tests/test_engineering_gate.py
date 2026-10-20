@@ -73,6 +73,95 @@ class EngineeringGateCliTests(unittest.TestCase):
         self.assertEqual(payload["risk_tier"], "TIER_1")
         self.assertIn("DEGS-VV-001", payload["applicable_rule_ids"])
 
+    def assert_control_rejected(self, fixture, path, value):
+        for command in ("validate", "evaluate", "explain"):
+            with self.subTest(fixture=fixture, path=path, value=value, command=command):
+                task = self.fixture_payload(fixture)
+                parent = task
+                for key in path[:-1]:
+                    parent = parent[key]
+                parent[path[-1]] = value
+                completed, payload = self.run_payload(command, payload=task)
+                self.assertEqual(completed.stderr, "")
+                self.assertEqual(completed.returncode, 4 if command == "validate" else 2)
+                self.assertEqual(payload["decision"], "FAIL" if command == "validate" else "BLOCKED")
+                self.assertTrue(any(
+                    item["field"].split(".", 1)[0].split("[", 1)[0] == path[0]
+                    for item in payload["unmet_requirements"]
+                ), payload)
+
+    def test_readiness_rejects_blank_or_mistyped_planning_controls(self):
+        for fixture in (
+            "tier0-readonly-pass.json", "tier1-reversible-pass.json",
+            "tier2-complete-pass.json", "tier3-complete-dry-run-pass.json",
+        ):
+            for path, value in (
+                (("objective",), " "), (("objective",), 0),
+                (("scope",), {"description": " "}),
+                (("scope",), {"description": 0}),
+                (("scope",), {"read_only": True}),
+            ):
+                self.assert_control_rejected(fixture, path, value)
+            if fixture != "tier0-readonly-pass.json":
+                for field in ("requirements", "acceptance_criteria"):
+                    for value in ([""], ["valid", " "], [0], []):
+                        self.assert_control_rejected(fixture, (field,), value)
+
+    def test_planned_placeholders_validate_but_cannot_pass_readiness(self):
+        for path in (("objective",), ("scope", "description"), ("requirements",), ("acceptance_criteria",)):
+            with self.subTest(path=path):
+                task = self.fixture_payload("tier1-reversible-pass.json")
+                task["status"] = "PLANNED"
+                parent = task if len(path) == 1 else task[path[0]]
+                parent[path[-1]] = [" "] if path[0] in {"requirements", "acceptance_criteria"} else " "
+                completed, payload = self.run_payload("validate", payload=task)
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                self.assertEqual(payload["decision"], "PASS")
+                for command in ("evaluate", "explain"):
+                    completed, payload = self.run_payload(command, payload=task)
+                    self.assertEqual(completed.returncode, 2, completed.stderr)
+                    self.assertEqual(payload["decision"], "BLOCKED")
+
+    def test_readiness_rejects_malformed_recovery_and_rollback_controls(self):
+        for fixture in ("tier1-reversible-pass.json", "tier2-complete-pass.json", "tier3-complete-dry-run-pass.json"):
+            for value in (0, " "):
+                self.assert_control_rejected(fixture, ("rollback",), {"status": "VERIFIED", "procedure": value})
+                if fixture == "tier1-reversible-pass.json":
+                    self.assert_control_rejected(fixture, ("rollback",), {"required": False, "reason": value})
+                else:
+                    self.assert_control_rejected(fixture, ("backup", "evidence_path"), value)
+
+    def test_tier3_readiness_rejects_malformed_containment_and_evidence(self):
+        fixture = "tier3-complete-dry-run-pass.json"
+        for path in (
+            ("target_identity", "identifier"), ("blast_radius", "description"),
+            ("recovery_validation", "evidence_path"), ("human_approval", "evidence_path"),
+            ("post_action_validation", "evidence_path"), ("dry_run", "evidence_path"),
+        ):
+            for value in (0, " "):
+                self.assert_control_rejected(fixture, path, value)
+        for value in ([""], ["valid", " "], [0], []):
+            self.assert_control_rejected(fixture, ("stop_conditions",), value)
+        for value in (0, " "):
+            self.assert_control_rejected(fixture, ("dry_run",), {"applicable": False, "reason": value})
+        for field, value in (
+            ("post_action_validation", {"status": "PASS"}),
+            ("dry_run", {"applicable": True, "performed": True, "status": "PASS"}),
+        ):
+            self.assert_control_rejected(fixture, (field,), value)
+
+    def test_unknown_data_authority_cannot_be_hidden_by_case_or_whitespace(self):
+        for field in ("authority", "repurposing"):
+            for value in ("UNKNOWN", "unknown", " UNKNOWN ", "\tUnKnOwN\n"):
+                if field == "repurposing":
+                    value = {
+                        "planned": True, "status": "AUTHORIZED", "purpose": "Synthetic reuse",
+                        "authority": value, "evidence_path": "synthetic-reuse.json",
+                    }
+                self.assert_control_rejected(
+                    "tier2-complete-pass.json", ("data_governance", field), value
+                )
+
     def test_tier1_unmet_controls_report_governing_rule_ids(self):
         task = self.fixture_payload("tier1-reversible-pass.json")
         task["requirements"] = []
