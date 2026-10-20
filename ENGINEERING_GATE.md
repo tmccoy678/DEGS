@@ -16,14 +16,11 @@ python3 bin/engineering-gate.py explain <task.json>
 
 Add `--json` anywhere after the script name for machine-readable output.
 
-## Companion Workbench assurance selector
+## Private companion Workbench assurance selector
 
-Prospective `TAYLOR_AI_WORKBENCH` work also uses the bounded DEAS adapter:
-
-```bash
-python3 bin/deas-gate.py adoption --json
-python3 bin/deas-gate.py work-unit <work-unit.json> --json
-```
+The private `TAYLOR_AI_WORKBENCH` integration's bounded DEAS adapter
+(`bin/deas-gate.py`) is excluded from this public snapshot. Its `adoption`
+and `work-unit` commands are therefore unavailable in this checkout.
 
 The adapter returns `ADOPTION` source/configuration identity or
 `WORK_UNIT_SELECTION` profile/overlay selection. Exit `0` is PASS, `2` is
