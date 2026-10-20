@@ -1,5 +1,7 @@
 # DEGS — v2.1 
 
+![DobeWorks command center running the current DobeWorks and DEGS cores](docs/figures/dobeworks-degs-command-center.png)
+
 I built DobeWorks and DEGS for myself after I became obsessed with AI hallucination capture and immutable context transfer between windows. I believe that the resulting DobeWorks and DEGS that I was using on my MacPro are rigorous and true reflections of the diligence in the references of the work that they were built from.
 
 DobeWorks and DEGS are my private personal engineering system and identity for methodological systems, software, research infrastructure, and special projects. It is not currently a public company identity, service, or commercial offering.
