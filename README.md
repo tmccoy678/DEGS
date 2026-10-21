@@ -2,11 +2,13 @@
 
 ![DobeWorks command center running the current DobeWorks and DEGS cores](docs/figures/dobeworks-degs-command-center.png)
 
-I built DobeWorks and DEGS for myself after I became obsessed with AI hallucination capture and immutable context transfer between windows. I believe that the resulting DobeWorks and DEGS that I was using on my MacPro are rigorous and true reflections of the diligence in the references of the work that they were built from.
+I will briefly introduce Dobeworks and DEGS. First, DobeWorks and DEGS were originally intended for personal-use after I became quite obsessed with LLM hallucinations and developing a way to perform auditable context transfer between windows for Codex and OpenAI models in August, 2026.
 
-DobeWorks and DEGS are my private personal engineering system and identity for methodological systems, software, research infrastructure, and special projects. It is not currently a public company identity, service, or commercial offering.
+I am aware that it is impossible to eliminate errors. It follows then that DobeWorks and DEGS do not try to fix errors; and one strength of the systems is their ability to prevent errors from moving forward into the next ticket or part of the work.
 
-If you would like to discuss DobeWorks or DEGS privately, please email me at: tmccoy678@gmail.com.
+DobeWorks and DEGS are my personal engineering system for methodological systems, software, research infrastructure, and special projects.
+
+If you would like to discuss DobeWorks and/or DEGS privately, please email me at: tmccoy678@gmail.com.
 
 Thank you,
 
