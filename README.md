@@ -1,6 +1,6 @@
 # DEGS
 
-![DobeWorks and DEGS shared terminal interface](docs/figures/dobeworks-degs-command-center.png)
+![DobeWorks and DEGS shared terminal interface](docs/figures/DobeWorks_UI.jpg)
 
 DEGS checks whether an engineering task's recorded evidence satisfies its governance rules and explains what is missing. It runs locally with Python 3.9 or later; no Python packages, model account, or API key are required.
 
