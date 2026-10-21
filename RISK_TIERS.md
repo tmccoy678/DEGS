@@ -2,6 +2,8 @@
 
 `DEGS-RISK-001` requires classification before mutation and fails closed for unknown or unsupported tiers. Controls accumulate: each tier includes all applicable controls below it.
 
+At every tier, any active warning or unresolved item blocks readiness under `DEGS-OPS-001`. The gate derives and numbers these items; a nonzero count is `CRITICAL`, `UNRESOLVED`, and `resolved: false`. Closure requires consistent `NONE` / `RESOLVED` / `true` fields and a nonblank evidence reference. See the [warning policy](ENGINEERING_GATE.md#warning-and-unresolved-item-policy).
+
 ## Tier 0 — Read-only / observation
 
 Examples: inspect state, read logs, or create analysis inside an authorized report directory.

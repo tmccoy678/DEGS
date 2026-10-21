@@ -1497,7 +1497,7 @@ class EngineeringGateCliTests(unittest.TestCase):
     def test_unresolved_critical_warning_blocks_tier3(self):
         task = self.fixture_payload("tier3-complete-dry-run-pass.json")
         task["warnings"] = [
-            {"severity": "CRITICAL", "message": "Synthetic critical warning", "resolved": False}
+            {"severity": "CRITICAL", "message": "Synthetic critical warning", "resolved": False, "status": "UNRESOLVED"}
         ]
 
         completed, payload = self.run_payload("evaluate", payload=task)
@@ -1505,25 +1505,27 @@ class EngineeringGateCliTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(payload["decision"], "BLOCKED")
 
-    def test_noncritical_warning_returns_pass_with_warnings_exit_code(self):
+    def test_noncritical_active_warning_blocks_readiness(self):
         task = self.fixture_payload("tier1-reversible-pass.json")
         task["warnings"] = [
-            {"severity": "WARNING", "message": "Synthetic non-critical warning", "resolved": False}
+            {"severity": "WARNING", "message": "Synthetic non-critical warning", "resolved": False, "status": "UNRESOLVED"}
         ]
 
         completed, payload = self.run_payload("evaluate", payload=task)
 
-        self.assertEqual(completed.returncode, 1)
-        self.assertEqual(payload["decision"], "PASS_WITH_WARNINGS")
+        self.assertEqual(completed.returncode, 2)
+        self.assertEqual(payload["decision"], "BLOCKED")
 
     def test_declared_failed_or_blocked_status_stops_an_otherwise_passing_task(self):
         for declared_status, with_warning in (
             ("FAILED", False),
+            ("FAILED", True),
+            ("BLOCKED", False),
             ("BLOCKED", True),
         ):
             with self.subTest(
                 declared_status=declared_status,
-                computed_path="PASS_WITH_WARNINGS" if with_warning else "PASS",
+                computed_path="BLOCKED" if with_warning else "PASS",
             ):
                 task = self.fixture_payload("tier2-complete-pass.json")
                 task["status"] = declared_status
@@ -1533,6 +1535,7 @@ class EngineeringGateCliTests(unittest.TestCase):
                             "severity": "WARNING",
                             "message": "Synthetic non-critical warning",
                             "resolved": False,
+                            "status": "UNRESOLVED",
                         }
                     ]
 
@@ -1540,9 +1543,8 @@ class EngineeringGateCliTests(unittest.TestCase):
 
                 self.assertEqual(completed.returncode, 2, completed.stderr)
                 self.assertEqual(payload["decision"], "BLOCKED")
-                self.assertEqual(
-                    self.unmet_rule_for_field(payload, "status"), "DEGS-OPS-001"
-                )
+                field = "warnings" if with_warning else "status"
+                self.assertEqual(self.unmet_rule_for_field(payload, field), "DEGS-OPS-001")
                 self.assertIn("DEGS-OPS-001", payload["applicable_rule_ids"])
 
     def test_schema_invalid_record_takes_precedence_over_declared_stop_status(self):

@@ -2,6 +2,7 @@
 """Evaluate DEGS task records without executing the described work."""
 
 import argparse
+from decimal import Decimal, InvalidOperation
 import json
 import re
 import sys
@@ -68,6 +69,11 @@ RISK_ANALYSIS_FACTORS = {
 
 SCHEMA_PATH = Path(__file__).resolve().parents[1] / "gate.schema.json"
 
+# Bound conversion work without rounding or underflowing accepted JSON numbers.
+# These are input representation limits, not a claim of full JSON Schema support.
+MAX_JSON_NUMBER_DIGITS = 4300
+MAX_JSON_NUMBER_EXPONENT = 10000
+
 SCHEMA_RULE_BY_FIELD = {
     "objective": "DEGS-MISSION-001",
     "requirements": "DEGS-REQ-002",
@@ -88,6 +94,8 @@ SCHEMA_RULE_BY_FIELD = {
     "verification": "DEGS-VV-001",
     "validation": "DEGS-VV-001",
     "status": "DEGS-OPS-001",
+    "warnings": "DEGS-OPS-001",
+    "unresolved_items": "DEGS-OPS-001",
 }
 
 
@@ -107,6 +115,42 @@ def unique_object(pairs):
 
 def reject_nonfinite_constant(value):
     raise InputError(f"nonfinite JSON constant: {value}")
+
+
+def validate_number_representation(token):
+    # The JSON decoder supplies a syntactically valid ASCII number token. Check
+    # its written representation before constructing either numeric value.
+    if sum(character.isdigit() for character in token) > MAX_JSON_NUMBER_DIGITS:
+        raise InputError("JSON number exceeds the supported decimal digit budget.")
+    _, separator, exponent = token.lower().partition("e")
+    if separator:
+        # Strip padding before converting, so an otherwise supported exponent
+        # cannot trigger an integer conversion limit merely through leading zeros.
+        magnitude = exponent.lstrip("+-").lstrip("0") or "0"
+        if (
+            len(magnitude) > len(str(MAX_JSON_NUMBER_EXPONENT))
+            or int(magnitude) > MAX_JSON_NUMBER_EXPONENT
+        ):
+            raise InputError("JSON number exceeds the supported exponent budget.")
+
+
+def parse_exact_integer(token):
+    validate_number_representation(token)
+    # Keep any tighter active interpreter integer-conversion limit in force.
+    return int(token)
+
+
+def parse_exact_decimal(token):
+    validate_number_representation(token)
+    try:
+        # Decimal(string) preserves every supplied digit independently of the
+        # arithmetic context precision; there is no binary float intermediary.
+        value = Decimal(token)
+    except InvalidOperation as error:
+        raise InputError("Unsupported JSON decimal representation.") from error
+    if not value.is_finite():
+        raise InputError("Nonfinite JSON numbers are not supported.")
+    return value
 
 
 def string_control(record, key):
@@ -522,8 +566,8 @@ def result(decision, task, unmet=None, warnings=None, rule_ids=None):
         "unmet_requirements": unmet or [],
         "warnings": warnings or [],
         "applicable_rule_ids": rule_ids or [],
-        "risk_tier": task.get("risk_tier"),
-        "authority_lane": task.get("authority_lane"),
+        "risk_tier": task.get("risk_tier") if isinstance(task.get("risk_tier"), str) else None,
+        "authority_lane": task.get("authority_lane") if isinstance(task.get("authority_lane"), str) else None,
         "evidence_paths": collect_evidence_paths(task),
     }
 
@@ -545,6 +589,23 @@ def invalid_result(message, task=None):
     return payload, 4
 
 
+def validate_unicode_strings(value):
+    """Reject unpaired surrogates in every decoded string, including keys."""
+    pending = [value]
+    while pending:
+        item = pending.pop()
+        if isinstance(item, str):
+            # The JSON decoder combines valid escaped high/low pairs into one
+            # Unicode scalar. Any remaining surrogate code point is unpaired.
+            if any(0xD800 <= ord(character) <= 0xDFFF for character in item):
+                raise InputError("Unpaired Unicode surrogates are not supported.")
+        elif isinstance(item, dict):
+            pending.extend(item.keys())
+            pending.extend(item.values())
+        elif isinstance(item, list):
+            pending.extend(item)
+
+
 def load_task(path):
     try:
         with path.open("r", encoding="utf-8") as handle:
@@ -552,10 +613,13 @@ def load_task(path):
                 handle,
                 object_pairs_hook=unique_object,
                 parse_constant=reject_nonfinite_constant,
+                parse_int=parse_exact_integer,
+                parse_float=parse_exact_decimal,
             )
+        validate_unicode_strings(task)
         if not isinstance(task, dict):
             return None, "Task input must be a JSON object."
-        if task.get("schema_version") != 1:
+        if not json_values_equal(task.get("schema_version"), 1):
             return task, "schema_version must be 1."
         if contains_secret_like_field(task.get("telemetry")) or contains_secret_like_field(task.get("state")):
             return task, "Telemetry or state contains a prohibited secret-like field."
@@ -1011,59 +1075,48 @@ def evaluate_tier2(task):
     return result("BLOCKED" if unmet else "PASS", task, unmet=unmet, rule_ids=rules)
 
 
-def unresolved_critical_warning(task):
-    for field in ("warnings", "unresolved_items"):
-        values = task.get(field)
-        if not isinstance(values, list):
-            continue
-        for item in values:
-            if not isinstance(item, dict):
-                continue
-            severity = str(item.get("severity", "")).upper()
-            resolved = item.get("resolved") is True or str(item.get("status", "")).upper() == "RESOLVED"
-            if severity == "CRITICAL" and not resolved:
-                return True
-    return False
-
-
 def unresolved_warning_summaries(task):
+    """Number active records after canonical warning-schema validation."""
     summaries = []
-    values = task.get("warnings")
-    if not isinstance(values, list):
-        return summaries
-    for item in values:
-        if not isinstance(item, dict):
-            continue
-        resolved = item.get("resolved") is True or str(item.get("status", "")).upper() == "RESOLVED"
-        if resolved:
-            continue
-        severity = str(item.get("severity", "WARNING")).upper()
-        summaries.append(
-            {
-                "severity": severity,
-                "message": "An unresolved warning is recorded in the task input.",
-            }
-        )
+    for field in ("warnings", "unresolved_items"):
+        for index, item in enumerate(task.get(field, [])):
+            if field == "warnings" and item["resolved"] is True:
+                continue
+            summaries.append({
+                "number": len(summaries) + 1,
+                "field": f"{field}[{index}]",
+                "severity": "CRITICAL",
+                "status": "UNRESOLVED",
+                "resolved": False,
+                "message": "An unresolved item is recorded in the task input.",
+            })
     return summaries
 
 
 def apply_warning_policy(task, payload):
     warnings = unresolved_warning_summaries(task)
     payload["warnings"] = warnings
-    if payload["decision"] != "PASS" or not warnings:
+    payload["warning_state"] = {
+        "unresolved_count": len(warnings),
+        "severity": "CRITICAL" if warnings else "NONE",
+        "status": "UNRESOLVED" if warnings else "RESOLVED",
+        "resolved": not warnings,
+    }
+    if not warnings:
         return payload
-    if any(item["severity"] == "CRITICAL" for item in warnings):
+    if payload["decision"] != "FAIL":
         payload["decision"] = "BLOCKED"
+    for field in ("warnings", "unresolved_items"):
+        if not any(item["field"].startswith(field + "[") for item in warnings):
+            continue
         add_unmet(
             payload["unmet_requirements"],
-            "warnings",
-            "DEGS-RISK-004",
-            "An unresolved critical warning blocks completion.",
+            field,
+            "DEGS-OPS-001",
+            "Every unresolved item is critical and blocks readiness at every risk tier.",
         )
-        if "DEGS-RISK-004" not in payload["applicable_rule_ids"]:
-            payload["applicable_rule_ids"].append("DEGS-RISK-004")
-    else:
-        payload["decision"] = "PASS_WITH_WARNINGS"
+    if "DEGS-OPS-001" not in payload["applicable_rule_ids"]:
+        payload["applicable_rule_ids"].append("DEGS-OPS-001")
     return payload
 
 
@@ -1119,8 +1172,6 @@ def tier3_containment_controls(task, unmet):
     )
     if not dry_run_satisfied:
         add_unmet(unmet, "dry_run", "DEGS-VV-008", "Tier 3 requires a dry run where possible or a documented reason it is not applicable.")
-    if unresolved_critical_warning(task):
-        add_unmet(unmet, "warnings", "DEGS-RISK-004", "An unresolved critical warning blocks Tier 3.")
 
 
 def evaluate_tier3(task):
@@ -1215,9 +1266,25 @@ def render_human(payload):
     if payload["unmet_requirements"]:
         lines.append("Unmet requirements:")
         lines.extend(f"- {item['rule_id']}: {item['message']}" for item in payload["unmet_requirements"])
+    warning_state = payload.get("warning_state")
+    if warning_state is not None:
+        lines.extend([
+            "Warning state:",
+            f"  Unresolved count: {warning_state['unresolved_count']}",
+            f"  Severity: {warning_state['severity']}",
+            f"  Status: {warning_state['status']}",
+            f"  Resolved: {str(warning_state['resolved']).lower()}",
+        ])
     if payload["warnings"]:
         lines.append("Warnings:")
-        lines.extend(f"- {item}" for item in payload["warnings"])
+        for item in payload["warnings"]:
+            lines.extend([
+                f"  {item['number']}. Source: {item['field']}",
+                f"     Severity: {item['severity']}",
+                f"     Status: {item['status']}",
+                f"     Resolved: {str(item['resolved']).lower()}",
+                f"     Message: {item['message']}",
+            ])
     lines.append("Applicable DEGS rules: " + ", ".join(payload["applicable_rule_ids"]))
     if payload["evidence_paths"]:
         lines.append("Evidence paths:")
@@ -1248,6 +1315,12 @@ def main(argv=None):
         else:
             schema_payload = validate_structure(task)
             try:
+                if any(
+                    item["field"].split(".", 1)[0].split("[", 1)[0]
+                    in {"warnings", "unresolved_items"}
+                    for item in schema_payload["unmet_requirements"]
+                ):
+                    raise InputError("Warning records must have consistent canonical states.")
                 validate_supplied_string_controls(task)
                 payload = evaluate(task)
                 if (
@@ -1294,6 +1367,12 @@ def main(argv=None):
             else render_human(payload)
         )
 
+    if not args.json_output:
+        # Preserve supported Unicode where the output encoding permits it and
+        # visibly escape other characters without changing the gate's decision
+        # or reconfiguring the caller's stdout stream. JSON is already ASCII-safe.
+        encoding = sys.stdout.encoding or "utf-8"
+        rendered = rendered.encode(encoding, errors="backslashreplace").decode(encoding)
     print(rendered)
     return exit_code
 

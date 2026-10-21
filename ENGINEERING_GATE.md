@@ -6,6 +6,8 @@ The gate at `bin/engineering-gate.py` evaluates readiness and completion evidenc
 
 A JSON task record conforming to `gate.schema.json`. Relative evidence paths are reported as recorded; version 1.1.0 does not authenticate their contents. Reviewers must examine consequential evidence independently.
 
+The [numeric input policy](docs/numeric-input-policy.md) preserves accepted integers and finite decimals exactly and rejects unsupported representations before conversion. All input strings, including object keys and nested values, must contain valid Unicode scalar values; unpaired surrogates are rejected with `FAIL`, exit `4`. Valid Unicode, including escaped surrogate pairs, is supported.
+
 Commands:
 
 ```bash
@@ -41,24 +43,40 @@ Every result includes:
 - authority lane; and
 - recorded evidence paths.
 
-`explain` also maps each applicable rule ID to a concise explanation.
+For records that reach readiness evaluation, `evaluate` and `explain` also report `warning_state`: a derived `unresolved_count`, aggregate `severity`, `status`, and Boolean `resolved`. Each active output warning has a sequential `number` and its source `field` (for example, `unresolved_items[0]`); messages are sanitized. `explain` also maps each applicable rule ID to a concise explanation.
+
+Machine JSON retains sorted keys, ASCII-safe escaping, and stable labeled fields. Human output uses readable labeled lines and numbered warnings. If the terminal cannot encode an otherwise valid Unicode character, text output displays its escape without changing the decision or exit code.
 
 ## Decisions and exit codes
 
 | Decision | Exit | Meaning |
 |---|---:|---|
 | `PASS` | 0 | Applicable recorded controls are present with no unresolved warning. |
-| `PASS_WITH_WARNINGS` | 1 | Controls pass and at least one non-critical warning remains. |
-| `BLOCKED` | 2 | A required readiness or completion control is absent or an unresolved critical warning exists. |
+| `PASS_WITH_WARNINGS` | 1 | Retained historical decision code; active warnings now block readiness. |
+| `BLOCKED` | 2 | A required readiness or completion control is absent or any unresolved item exists. |
 | `FAIL` | 3 | The risk tier is unknown/unsupported or evaluation otherwise fails closed. |
 | invalid input/schema | 4 | Input is unreadable, malformed, unsupported, or contains prohibited secret-like telemetry/state fields. The JSON decision remains `FAIL`. |
+
+## Warning and unresolved-item policy
+
+`DEGS-OPS-001` applies this readiness floor at every tier, including Tier 0:
+
+- Every warning requires the exact, case-sensitive fields `severity`, `status`, and `resolved`.
+- An active warning uses `INFO`, `WARNING`, or `CRITICAL`, with `status: UNRESOLVED` and `resolved: false`.
+- A closed warning requires all of `severity: NONE`, `status: RESOLVED`, `resolved: true`, and a nonblank `evidence_path`. The reference records closure evidence; reviewers still must assess that evidence.
+- Missing, contradictory, unknown, or padded values (including `CRITICAL `) are invalid. Warning-schema errors return `FAIL`, exit `4`, even if another readiness control already blocks the task.
+- `unresolved_items` remains an array of actual records: nonblank text or active warning objects. Move resolved records to warning history; a resolved record cannot remain in this list.
+- The gate counts every active warning and every unresolved-item entry. A caller cannot supply a count or replace the list with a claimed zero. Entries are counted separately, including repeated records.
+- A count greater than zero produces aggregate `CRITICAL`, `UNRESOLVED`, and `resolved: false`, and blocks readiness. A zero count produces aggregate `NONE`, `RESOLVED`, and `resolved: true`; other controls still determine readiness.
+
+`validate` checks structure only. A well-formed active warning may pass validation while `evaluate` and `explain` return `BLOCKED`.
 
 ## Risk-specific enforcement
 
 - **Tier 0:** objective, explicit read-only scope, Command Center lane, and controlled secret exposure.
 - **Tier 1:** bounded scope, requirements, acceptance criteria, baseline, static and positive tests, rollback or a reason it is trivial, and handoff.
 - **Tier 2:** Tier 1 controls plus backup, explicit rollback, an evidenced `risk_analysis` covering consequence, reversibility, data sensitivity, operational reach, physical effects, affected-party impact, and AI/socio-technical risk; `deterministic_controls`; exact `artifact_identity` across reviewed/tested/execution/handoff artifacts with configuration version, canonical path, provenance, and current evidence; complete `change_traceability`; `data_governance`; a current `threat_model`; consequential `ai_assurance` with measurable quality/safety/security/fairness criteria; operational `monitoring`; separate `verification` and `validation` records with `PASS` or `VERIFIED` status and a nonblank `evidence_path`; negative/security/failure-path/end-to-end tests whose passing records each include a nonblank `evidence_path`; independent review; canonical documentation; and sanitized telemetry.
-- **Tier 3:** Tier 2 controls plus the Taylor lane; a complete `hazard_analysis` with tested elimination or mitigation, a passing cross-domain check, and human-only evidenced residual-risk acceptance; an approval record with `status=APPROVED`, `approver=Taylor`, `approver_role=HUMAN`, `approval_mode=OUT_OF_BAND`, and a non-empty evidence path; independently verified recovery; independent audit; exact target; bounded blast radius; stop conditions; post-action validation; dry run where possible; and no unresolved critical warning.
+- **Tier 3:** Tier 2 controls plus the Taylor lane; a complete `hazard_analysis` with tested elimination or mitigation, a passing cross-domain check, and human-only evidenced residual-risk acceptance; an approval record with `status=APPROVED`, `approver=Taylor`, `approver_role=HUMAN`, `approval_mode=OUT_OF_BAND`, and a non-empty evidence path; independently verified recovery; independent audit; exact target; bounded blast radius; stop conditions; post-action validation; dry run where possible; and no unresolved item.
 
 `data_governance`, `threat_model`, `ai_assurance`, and `monitoring` allow reasoned non-applicability: `applicable=false`, `status=NOT_APPLICABLE`, and a non-empty reason. Omission, unknown authority, prompt-only controls, stale identity evidence, or an unsupported assertion of non-applicability fails closed. `deterministic_controls`, `artifact_identity`, and `change_traceability` remain mandatory for Tier 2 and Tier 3.
 

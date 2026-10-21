@@ -144,6 +144,10 @@ For Tier 3, the gate requires `APPROVED`, `Taylor`, `HUMAN`, `OUT_OF_BAND`, and 
 
 ## Warnings
 
+Each warning must record canonical `severity`, `status`, and `resolved` fields. Active warnings use `INFO`, `WARNING`, or `CRITICAL` with `UNRESOLVED` and `false`; all block readiness. Closed warning history requires `NONE`, `RESOLVED`, `true`, and a nonblank closure `evidence_path`.
+
 ## Unresolved items
+
+List the actual unresolved records as nonblank text or active warning objects. The gate derives the count and numbers output items. Any nonzero count blocks readiness at every tier; move resolved records to warning history instead of leaving them here.
 
 ## Final status

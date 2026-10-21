@@ -77,7 +77,7 @@ DEGS 1.1.0 is ACTIVE because the complete automated test suite passed, the indep
 
 ## Operations, completion, and context
 
-- **DEGS-OPS-001 — Truthful completion.** Never claim completion merely because a command returned; report unmet criteria, warnings, and unknowns accurately.
+- **DEGS-OPS-001 — Truthful completion.** Never claim completion merely because a command returned; report unmet criteria, warnings, and unknowns accurately. At every risk tier, derive the unresolved count from actual warning and unresolved-item records. Any nonzero count is critical, unresolved, and blocks readiness. A closed warning requires consistent `NONE` severity, `RESOLVED` status, `resolved: true`, and recorded nonblank closure evidence; malformed or contradictory states are invalid input.
 - **DEGS-OPS-002 — Observability.** Provide proportionate post-deployment telemetry or status evidence without exposing secrets. Where monitoring applies, record its owner, expected operating range, alert and stop thresholds, reassessment triggers, and safe degradation or disengagement path.
 - **DEGS-OPS-003 — Lessons become controls.** Convert a demonstrated exploit, failure, escaped defect, or other lesson into a regression test, checklist item, or policy rule when doing so materially reduces recurrence.
 - **DEGS-OPS-004 — Proportional tailoring.** Apply enough governance to control the actual risk and avoid ceremony that cannot change a decision. Prototypes, canaries, rings, and staged rollout may reduce risk but never bypass applicable authority, backup, rollback, review, or evidence gates.
