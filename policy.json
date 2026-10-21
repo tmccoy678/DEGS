@@ -64,6 +64,17 @@
     "TIER_2": ["backup", "rollback", "risk_analysis", "deterministic_controls", "artifact_identity", "change_traceability", "data_governance", "threat_model", "ai_assurance", "monitoring", "verification.status=PASS_or_VERIFIED", "verification.evidence_path", "validation.status=PASS_or_VERIFIED", "validation.evidence_path", "tests.negative.status=PASS", "tests.negative.evidence_path", "tests.security.status=PASS", "tests.security.evidence_path", "tests.failure_path.status=PASS", "tests.failure_path.evidence_path", "tests.end_to_end.status=PASS", "tests.end_to_end.evidence_path", "independent_review", "documentation", "telemetry"],
     "TIER_3": ["human_approval.status=APPROVED", "human_approval.approver=Taylor", "human_approval.approver_role=HUMAN", "human_approval.approval_mode=OUT_OF_BAND", "human_approval.evidence_path", "hazard_analysis.status=COMPLETE", "hazard_analysis.cross_domain_check.status=PASS", "hazard_analysis.residual_risk.acceptor_role=HUMAN_when_accepted", "recovery_validation", "independent_review.kind=AUDIT", "target_identity", "blast_radius", "stop_conditions", "post_action_validation", "dry_run", "no_unresolved_critical_warning", "authority_lane=TAYLOR"]
   },
+  "warning_policy": {
+    "rule_id": "DEGS-OPS-001",
+    "applies_to": ["TIER_0", "TIER_1", "TIER_2", "TIER_3"],
+    "count_source": "active warnings plus all unresolved_items entries",
+    "caller_supplied_count_allowed": false,
+    "nonzero_count": {"severity": "CRITICAL", "status": "UNRESOLVED", "resolved": false, "decision": "BLOCKED"},
+    "zero_count": {"severity": "NONE", "status": "RESOLVED", "resolved": true},
+    "closed_warning_requires": ["severity=NONE", "status=RESOLVED", "resolved=true", "nonblank evidence_path"],
+    "malformed_or_contradictory_warning": "FAIL_EXIT_4",
+    "validation_scope": "structural only; readiness requires evaluate or explain"
+  },
   "gate_requirement_inheritance": {
     "TIER_3": ["TIER_2"]
   },

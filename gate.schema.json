@@ -114,7 +114,10 @@
     "handoff": {"$ref": "#/$defs/evidenceObject"},
     "secret_handling": {"$ref": "#/$defs/evidenceObject"},
     "warnings": {"type": "array", "items": {"$ref": "#/$defs/warning"}},
-    "unresolved_items": {"type": "array", "items": {"type": ["string", "object"]}},
+    "unresolved_items": {"type": "array", "items": {"oneOf": [
+      {"$ref": "#/$defs/nonblankString"},
+      {"$ref": "#/$defs/activeWarning"}
+    ]}},
     "status": {"enum": ["PLANNED", "READY_FOR_EXECUTION", "IN_PROGRESS", "BLOCKED", "COMPLETE", "FAILED"]}
   },
   "$defs": {
@@ -681,14 +684,38 @@
     },
     "warning": {
       "type": "object",
-      "required": ["severity"],
+      "required": ["severity", "resolved", "status"],
       "properties": {
-        "severity": {"enum": ["INFO", "WARNING", "CRITICAL"]},
+        "severity": {"enum": ["NONE", "INFO", "WARNING", "CRITICAL"]},
         "message": {"type": "string"},
         "resolved": {"type": "boolean"},
-        "status": {"type": "string"}
+        "status": {"enum": ["UNRESOLVED", "RESOLVED"]},
+        "evidence_path": {"$ref": "#/$defs/nonblankString"}
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "severity": {"enum": ["INFO", "WARNING", "CRITICAL"]},
+            "resolved": {"const": false},
+            "status": {"const": "UNRESOLVED"}
+          }
+        },
+        {
+          "required": ["evidence_path"],
+          "properties": {
+            "severity": {"const": "NONE"},
+            "resolved": {"const": true},
+            "status": {"const": "RESOLVED"}
+          }
+        }
+      ]
+    },
+    "activeWarning": {
+      "allOf": [
+        {"$ref": "#/$defs/warning"},
+        {"properties": {"resolved": {"const": false}, "status": {"const": "UNRESOLVED"}}}
+      ]
     }
   }
 }
