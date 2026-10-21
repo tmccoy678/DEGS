@@ -24,6 +24,10 @@ DEGS evaluates engineering task records and explains whether their recorded evid
 
 **Public development snapshot. No versioned release.** This copy contains the standalone evidence gate and a small, Sashiko-derived Python review-data component. The [boundary-fix record](docs/reviews/2026-10-20-boundary-fixes.md) separates the current input-validation work from historical comparator evidence. It does not activate governance on your computer.
 
+## Shared interface
+
+DEGS and DobeWorks share [one terminal interface hosted in DobeWorks](https://github.com/tmccoy678/DobeWorks-v2.1/tree/main/interface). Follow that setup guide to clone the two repositories alongside each other and open the blue Command Center shown above. It calls the existing core CLIs; DEGS needs no separate UI installation or core changes. The menu includes both DEGS examples, DobeWorks programs, a synthetic adapter mapping check, and core verification. Recorded evidence and passing demonstrations grant no execution authority.
+
 ## Try the gate
 
 Use Python 3.9 or later. No pip packages are needed for the gate or Python tests. The repository is public; run these commands from this checkout's root. Exact tested interpreters and environments are recorded with the [current verification results](docs/reviews/2026-10-20-boundary-fixes.md).
