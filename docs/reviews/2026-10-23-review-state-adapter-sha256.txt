@@ -1,0 +1,5 @@
+e732b2d269ca33d2259798e317e620f871529015f9116dc96a763c7231c3bc35  README.md
+33df1bc9bcd9f8d9a5dbd81b4ba92fb8ddf2951b958e24d27e944f6e2be31814  bin/review-state.py
+c6ac44364ecfbdb38018146de9d3a51606105b89bfa052dcd602929d8ac91571  docs/port-boundaries.md
+45ecb05d5a4b57c067e8ba85e3de194b32b2bf0e3854432711639a1af431c53c  docs/reviews/2026-10-23-review-state-adapter.md
+a1a9d00b7672ac0f5f426bed69c278119c0a06ea4b83dc845dd9c5095c06befc  tests/test_review_state_cli.py

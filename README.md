@@ -25,6 +25,13 @@ This release contains the standalone evidence gate, canonical task schema, synth
 
 The Sashiko component preserves supplied concerns and selected review state. It does not run an LLM investigation or a live software engineering agent. Try it with `python3 -B -m sashiko_derived.demo`; see its [scope](docs/port-boundaries.md) and [source provenance](provenance/sashiko-source.json).
 
+The current tree also exposes those selected value operations through
+`bin/review-state.py`. The command accepts bounded agent-supplied stage outputs,
+stage-stamps and aggregates their concerns and dismissals, and returns
+`NONE_REPORTED` or `UNRESOLVED_REPORTED`. These are report states, not semantic
+review or candidate-acceptance decisions. The DobeWorks governed live-worker
+uses the command through an exact-identity boundary.
+
 ## Evidence and documentation
 
 The [current correction record](docs/reviews/2026-10-21-warning-input-fixes.md) records 102 passing tests on Python 3.14.7, 101 passes and one interpreter-specific skip on Python 3.9.6, and five benchmark tests. The [schema-helper benchmark](benchmarks/benchmark.md) matched 241 selected cases with controls passing. These are bounded observations for the recorded source and environment.
