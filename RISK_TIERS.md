@@ -56,6 +56,8 @@ Required controls:
 - canonical documentation; and
 - sanitized telemetry or status update.
 
+If a Tier 2 task record explicitly sets `human_approval.required=true`, readiness requires `human_approval.status=APPROVED`. A rejected, pending, missing, or contradictory required approval blocks under `DEGS-RISK-003`.
+
 Default lane: Taylor AI Workbench. AgentOps requires deliberate delegation and may not increase its authority.
 
 ## Tier 3 — Critical / destructive / irreversible
