@@ -15,3 +15,26 @@ The source is Sashiko commit `39f6ce95c797bb40023247916a8b16d0f4aaf0da`. Exact f
 The original source verifier for stage concerns returns success without checking the item contents. The selected port does not disguise that limitation by calling its output proven or accepted. A future semantic-review integration must preserve all existing DEGS requirements and document its separate verification evidence.
 
 The differential harness compares selected operations on decoded JSON values and objects, including null, booleans, scalars, nested arrays/objects, Unicode, and signed/unsigned integer limits. It is bounded evidence, not a proof over every input or an end-to-end Sashiko port.
+
+## Review-state command boundary
+
+`bin/review-state.py` is an original DEGS command adapter around the selected
+Sashiko-derived value operations. It accepts one closed
+`degs.sashiko-review-request/v1` object, limits the request to 32 stage outputs
+and one MiB, rejects duplicate keys or stage names, bounds JSON depth, node
+count, and number representation, rejects non-finite numbers, validates stage
+names, and returns one `degs.sashiko-review-state/v1` object.
+
+The result records `report_basis: AGENT_SUPPLIED_REVIEW_VALUES` and one of two
+states:
+
+- `UNRESOLVED_REPORTED`: at least one supplied concern remains in
+  `all_concerns`.
+- `NONE_REPORTED`: no unresolved concern was supplied.
+
+`NONE_REPORTED` does not mean clean, verified, accepted, or complete. The
+command cannot detect an omitted concern or decide whether a dismissal is
+sound. Its deduplication, conflict-resolution, and findings collections remain
+empty because the corresponding semantic stages are not executed. Callers
+must retain the distinction between this aggregation result, DEGS preflight
+readiness, candidate state, and human acceptance.
