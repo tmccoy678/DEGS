@@ -1067,6 +1067,21 @@ def tier2_controls(task):
         add_unmet(unmet, "documentation", "DEGS-CONTEXT-001", "Tier 2 requires canonical documentation.")
     if not status_is(task.get("telemetry"), "SANITIZED", "PASS"):
         add_unmet(unmet, "telemetry", "DEGS-OPS-002", "Tier 2 requires sanitized telemetry or status evidence.")
+    approval = task.get("human_approval")
+    if (
+        task.get("risk_tier") == "TIER_2"
+        and isinstance(approval, dict)
+        and approval.get("required") is True
+    ):
+        if "DEGS-RISK-003" not in rules:
+            rules.append("DEGS-RISK-003")
+        if approval.get("status") != "APPROVED":
+            add_unmet(
+                unmet,
+                "human_approval",
+                "DEGS-RISK-003",
+                "A required human approval must have status APPROVED before Tier 2 readiness.",
+            )
     return unmet, rules
 
 

@@ -254,6 +254,34 @@ class EngineeringGateCliTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertEqual(payload["decision"], "PASS")
 
+    def test_tier2_required_rejected_human_approval_is_blocked(self):
+        task = self.fixture_payload("tier2-complete-pass.json")
+        task["human_approval"] = {
+            "required": True,
+            "status": "REJECTED",
+        }
+
+        completed, payload = self.run_payload("evaluate", payload=task)
+
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        self.assertEqual(payload["decision"], "BLOCKED")
+        self.assertEqual(
+            self.unmet_rule_for_field(payload, "human_approval"),
+            "DEGS-RISK-003",
+        )
+
+    def test_tier2_required_approved_human_approval_passes(self):
+        task = self.fixture_payload("tier2-complete-pass.json")
+        task["human_approval"] = {
+            "required": True,
+            "status": "APPROVED",
+        }
+
+        completed, payload = self.run_payload("evaluate", payload=task)
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(payload["decision"], "PASS")
+
     def test_tier2_and_tier3_require_verification_evidence(self):
         for fixture_name in (
             "tier2-complete-pass.json",
