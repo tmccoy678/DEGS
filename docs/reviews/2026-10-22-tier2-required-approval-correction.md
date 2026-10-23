@@ -21,7 +21,7 @@ Taylor's account is that DobeWorks and DEGS once governed every message entering
 
 That history explains the behavior but does not make the verdict truthful. Proportional governance belongs in risk classification and control selection. Once a task record says human approval is required and records `REJECTED`, the gate must block.
 
-The DobeWorks repository preserves [two screenshots and their provenance](https://github.com/tmccoy678/DobeWorks/blob/main/docs/history/clean-path-balance.md): a contemporaneous September 8 discussion of the governance burden and an October 22 window-only capture of the external Workbench menu showing the resulting Clean Path option.
+The DobeWorks repository preserves [two screenshots and their provenance](https://github.com/tmccoy678/DobeWorks/blob/main/docs/history/clean-path-balance.md): a contemporaneous September 8 discussion of the governance burden and an October 22 documentation capture of the installed external Workbench menu showing the resulting Clean Path option. The latter was opened solely for the visual record and does not indicate use on that date.
 
 ## Correction
 
