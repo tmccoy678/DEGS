@@ -21,6 +21,8 @@ Taylor's account is that DobeWorks and DEGS once governed every message entering
 
 That history explains the behavior but does not make the verdict truthful. Proportional governance belongs in risk classification and control selection. Once a task record says human approval is required and records `REJECTED`, the gate must block.
 
+The DobeWorks repository preserves [two screenshots and their provenance](https://github.com/tmccoy678/DobeWorks/blob/main/docs/history/clean-path-balance.md): a contemporaneous September 8 discussion of the governance burden and an October 22 window-only capture of the external Workbench menu showing the resulting Clean Path option.
+
 ## Correction
 
 `tier2_controls` now applies `DEGS-RISK-003` when `human_approval.required` is `true`. Only exact `status=APPROVED` satisfies that Tier 2 requirement. The existing stronger Tier 3 checks for Taylor, human role, out-of-band mode, and evidence remain unchanged.
